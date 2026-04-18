@@ -54,16 +54,18 @@ setlocal
 @REM ==== START VALIDATION ====
 if not "%JAVA_HOME%" == "" goto OkJHome
 
+for %%i in (java.exe) do set "JAVACMD=%%~$PATH:i"
+if not "%JAVACMD%" == "" goto init
+
 echo.
-echo Error: JAVA_HOME is set to an invalid directory. >&2
-echo JAVA_HOME = "%JAVA_HOME%" >&2
-echo Please set the JAVA_HOME variable in your environment to match the >&2
-echo location of your Java installation. >&2
+echo Error: JAVA_HOME is not set and no 'java' command could be found in your PATH. >&2
+echo Please set JAVA_HOME to your JDK installation folder or add java.exe to PATH. >&2
 echo.
 goto error
 
 :OkJHome
-if exist "%JAVA_HOME%\bin\java.exe" goto init
+set "JAVACMD=%JAVA_HOME%\bin\java.exe"
+if exist "%JAVACMD%" goto init
 
 echo.
 echo Error: JAVA_HOME is set to an invalid directory. >&2
@@ -97,7 +99,7 @@ set "MAVEN_PROJECTBASEDIR=%EXEC_DIR%"
 
 :endDetectBaseDir
 
-set WRAPPER_JAR="%MAVEN_PROJECTBASEDIR%\.mvn\wrapper\maven-wrapper.jar"
+set "WRAPPER_JAR=%MAVEN_PROJECTBASEDIR%\.mvn\wrapper\maven-wrapper.jar"
 set WRAPPER_LAUNCHER=org.apache.maven.wrapper.MavenWrapperMain
 
 set DOWNLOAD_URL="https://repo.maven.apache.org/maven2/org/apache/maven/wrapper/maven-wrapper/3.2.0/maven-wrapper-3.2.0.jar"
@@ -107,16 +109,16 @@ FOR /F "usebackq tokens=1,2 delims==" %%A IN ("%MAVEN_PROJECTBASEDIR%\.mvn\wrapp
 )
 
 @REM Extension to allow automatically downloading the maven-wrapper.jar
-if exist %WRAPPER_JAR% (
+if exist "%WRAPPER_JAR%" (
     if "%MVNW_VERBOSE%" == "true" (
-        echo Found %WRAPPER_JAR%
+        echo Found "%WRAPPER_JAR%"
     )
 ) else (
     if not "%MVNW_REPOURL%" == "" (
         SET DOWNLOAD_URL=%DOWNLOAD_URL:https://repo.maven.apache.org/maven2=%MVNW_REPOURL%
     )
     if "%MVNW_VERBOSE%" == "true" (
-        echo Couldn't find %WRAPPER_JAR%, downloading it ...
+        echo Couldn't find "%WRAPPER_JAR%", downloading it ...
         echo Downloading from: %DOWNLOAD_URL%
     )
 
@@ -126,17 +128,17 @@ if exist %WRAPPER_JAR% (
 		"$webclient.Credentials = new-object System.Net.NetworkCredential($env:MVNW_USERNAME, $env:MVNW_PASSWORD);"^
 		"}"^
 		"[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12;"^
-		"$webclient.DownloadFile('%DOWNLOAD_URL%', %WRAPPER_JAR%)"^
+		"$webclient.DownloadFile('%DOWNLOAD_URL%', '%WRAPPER_JAR%')"^
 		"}"
     if "%MVNW_VERBOSE%" == "true" (
-        echo Finished downloading %WRAPPER_JAR%
+        echo Finished downloading "%WRAPPER_JAR%"
     )
 )
 
 @REM Provide a "standard" way to retrieve the CLI args that will work with both windows and non-windows execution
 set MAVEN_CMD_LINE_ARGS=%*
 
-"%JAVA_HOME%\bin\java.exe" %MAVEN_OPTS% %MAVEN_DEBUG_OPTS% -classpath %WRAPPER_JAR% %WRAPPER_LAUNCHER% "-Dmaven.multiModuleProjectDirectory=%MAVEN_PROJECTBASEDIR%" %MAVEN_CONFIG% %*
+"%JAVACMD%" %MAVEN_OPTS% %MAVEN_DEBUG_OPTS% -classpath "%WRAPPER_JAR%" %WRAPPER_LAUNCHER% "-Dmaven.multiModuleProjectDirectory=%MAVEN_PROJECTBASEDIR%" %MAVEN_CONFIG% %*
 if ERRORLEVEL 1 goto error
 goto end
 
