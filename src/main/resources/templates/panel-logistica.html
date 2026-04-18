@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SISIE - Panel de Logística</title>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+
+<body class="panel-body">
+
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="brand">
+            <i class="fas fa-box-open"></i> SISIE
+        </div>
+        <div class="nav-links">
+            <a th:href="@{/logistica}" class="nav-item active"><i class="fas fa-home"></i> Inicio</a>
+            <a th:href="@{/envios}" class="nav-item"><i class="fas fa-truck"></i> Envíos</a>
+        </div>
+        <div class="user-profile">
+            <span><i class="fas fa-user-circle"></i> E. Envíos</span>
+            <a href="#" style="color: white; margin-left: 20px;"><i class="fas fa-sign-out-alt"></i></a>
+        </div>
+    </nav>
+
+    <!-- Welcome Banner -->
+    <section class="welcome-banner">
+        <div class="banner-icon">
+            <i class="fas fa-home"></i>
+        </div>
+        <div class="banner-text">
+            <h2>Bienvenido a SISIE</h2>
+            <p>Sistema de inventario y gestión de Envíos - Panel de Envíos</p>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <div class="stats-container">
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-truck"></i></div>
+            <div class="stat-info">
+                <p class="label">Total Envíos</p>
+                <p class="value">44</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-box"></i></div>
+            <div class="stat-info">
+                <p class="label">Nuevos envíos</p>
+                <p class="value">42</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-sync fa-spin"></i></div>
+            <div class="stat-info">
+                <p class="label">En proceso</p>
+                <p class="value">2</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-check-double"></i></div>
+            <div class="stat-info">
+                <p class="label">Entregados</p>
+                <p class="value">5</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Envíos Pendientes (Reemplaza a Acciones Rápidas) -->
+    <section class="table-container" style="margin: 0 50px 50px;">
+        <h3 class="section-title"><i class="fas fa-exclamation-circle text-warning"></i> Envíos pendientes de gestión
+        </h3>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px;">Estos envíos provienen del área de
+            ventas y requieren asignación de flete.</p>
+
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID Venta</th>
+                    <th>Destinatario</th>
+                    <th>Dirección</th>
+                    <th>Fecha de Ingreso</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>V-5423</td>
+                    <td>María López</td>
+                    <td>Av. Libertador 1234</td>
+                    <td>18/04/2026</td>
+                    <td>
+                        <button class="btn-orange"><i class="fas fa-dolly"></i> Iniciar gestión</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>V-5424</td>
+                    <td>Juan Pérez</td>
+                    <td>San Martín 432</td>
+                    <td>18/04/2026</td>
+                    <td>
+                        <button class="btn-orange"><i class="fas fa-dolly"></i> Iniciar gestión</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+</body>
+
+</html>

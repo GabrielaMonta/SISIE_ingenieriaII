@@ -1,0 +1,30 @@
+# Java & Spring Boot
+target/
+*.class
+*.jar
+*.war
+*.ear
+*.log
+
+# Maven
+.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**
+!**/src/test/**
+
+# IDEs
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# System
+Thumbs.db
+.DS_Store
+*.tmp
+*.temp
+
+# Local Configuration
+src/main/resources/application.properties
+output_maven.txt
+TestDB.java

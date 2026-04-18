@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SISIE - Gestión de Envíos</title>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body class="panel-body">
+
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="brand">
+            <i class="fas fa-box-open"></i> SISIE
+        </div>
+        <div class="nav-links">
+            <a th:href="@{/logistica}" class="nav-item"><i class="fas fa-home"></i> Inicio</a>
+            <a th:href="@{/envios}" class="nav-item active"><i class="fas fa-truck"></i> Envíos</a>
+        </div>
+        <div class="user-profile">
+            <span><i class="fas fa-user-circle"></i> E. Envíos</span>
+            <a href="#" style="color: white; margin-left: 20px;"><i class="fas fa-sign-out-alt"></i></a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="page-header">
+            <h2><i class="fas fa-truck-moving" style="margin-right: 10px;"></i> Gestión de envíos</h2>
+            
+            <div class="status-filters">
+                <button class="status-btn btn-new">Nuevos</button>
+                <button class="status-btn btn-process">En Proceso</button>
+                <button class="status-btn btn-delivered">Entregados</button>
+            </div>
+        </div>
+
+        <div class="filter-section">
+            <div class="filter-group">
+                <label>Filtrar por:</label>
+                <select class="filter-select">
+                    <option>Todos</option>
+                    <option>En camino</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Fecha desde</label>
+                <input type="date" class="filter-input">
+            </div>
+            <div class="filter-group">
+                <label>Fecha hasta</label>
+                <input type="date" class="filter-input">
+            </div>
+            <div class="filter-actions">
+                <button class="btn-dark">Filtrar</button>
+                <button class="btn-outline">Limpiar</button>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <div class="table-header-flex">
+                <h3 class="section-title" style="margin: 0;"><i class="fas fa-list"></i> Listado de Envíos</h3>
+                <div class="search-box">
+                    <input type="text" placeholder="Buscar productos...">
+                    <i class="fas fa-search search-icon"></i>
+                </div>
+            </div>
+
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>ID_Venta</th>
+                        <th>Costo</th>
+                        <th>Destinatario</th>
+                        <th>Servicio</th>
+                        <th>Registrado por</th>
+                        <th>Fecha envío</th>
+                        <th>Fecha recepción</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1001</td>
+                        <td>V-5421</td>
+                        <td>$1,200.00</td>
+                        <td>Gabriela Torres</td>
+                        <td>Estándar</td>
+                        <td>E. Ventas</td>
+                        <td>18/04/2026</td>
+                        <td>-</td>
+                        <td><span class="badge badge-new">Nuevo</span></td>
+                        <td class="action-cell">
+                            <button class="icon-btn text-warning" title="Ver"><i class="fas fa-eye"></i></button>
+                            <button class="icon-btn text-warning" title="Editar"><i class="fas fa-pencil-alt"></i></button>
+                            <button class="icon-btn text-danger" title="Eliminar"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>1002</td>
+                        <td>V-5422</td>
+                        <td>$3,500.00</td>
+                        <td>Carlos Sánchez</td>
+                        <td>Express</td>
+                        <td>E. Ventas</td>
+                        <td>17/04/2026</td>
+                        <td>18/04/2026</td>
+                        <td><span class="badge badge-delivered">Entregado</span></td>
+                        <td class="action-cell">
+                            <button class="icon-btn text-warning" title="Ver"><i class="fas fa-eye"></i></button>
+                            <button class="icon-btn text-warning" title="Editar"><i class="fas fa-pencil-alt"></i></button>
+                            <button class="icon-btn text-danger" title="Eliminar"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="table-footer">
+                <button class="btn-text">Next <i class="fas fa-arrow-right"></i></button>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
