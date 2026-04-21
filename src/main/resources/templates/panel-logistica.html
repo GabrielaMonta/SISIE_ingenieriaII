@@ -5,9 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SISIE - Panel de Logística</title>
-    <!-- Font Awesome -->
+    <!-- Fuente -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Custom CSS -->
+    <!-- Estilos -->
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 
@@ -22,13 +22,17 @@
             <a th:href="@{/logistica}" class="nav-item active"><i class="fas fa-home"></i> Inicio</a>
             <a th:href="@{/envios}" class="nav-item"><i class="fas fa-truck"></i> Envíos</a>
         </div>
-        <div class="user-profile">
-            <span><i class="fas fa-user-circle"></i> E. Envíos</span>
-            <a href="#" style="color: white; margin-left: 20px;"><i class="fas fa-sign-out-alt"></i></a>
+        <div class="user-profile" style="display: flex; align-items: center; gap: 15px;">
+            <span><i class="fas fa-user-circle"></i> <span th:text="${nombreUsuario != null ? nombreUsuario : 'Usuario'}">Usuario</span></span>
+            <form th:action="@{/logout}" method="post" style="margin: 0; display: inline-block;">
+                <button type="submit" style="background: none; border: none; color: white; cursor: pointer; padding: 0;">
+                    <i class="fas fa-sign-out-alt" title="Cerrar sesión"></i>
+                </button>
+            </form>
         </div>
     </nav>
 
-    <!-- Welcome Banner -->
+    <!-- Bienvenida -->
     <section class="welcome-banner">
         <div class="banner-icon">
             <i class="fas fa-home"></i>
@@ -39,34 +43,34 @@
         </div>
     </section>
 
-    <!-- Stats Section -->
+    <!-- Panel de datos -->
     <div class="stats-container">
         <div class="stat-card">
             <div class="stat-icon"><i class="fas fa-truck"></i></div>
             <div class="stat-info">
                 <p class="label">Total Envíos</p>
-                <p class="value">44</p>
+                <p class="value" th:text="${totalEnvios}">0</p>
             </div>
         </div>
         <div class="stat-card">
             <div class="stat-icon"><i class="fas fa-box"></i></div>
             <div class="stat-info">
                 <p class="label">Nuevos envíos</p>
-                <p class="value">42</p>
+                <p class="value" th:text="${nuevosEnvios}">0</p>
             </div>
         </div>
         <div class="stat-card">
             <div class="stat-icon"><i class="fas fa-sync fa-spin"></i></div>
             <div class="stat-info">
                 <p class="label">En proceso</p>
-                <p class="value">2</p>
+                <p class="value" th:text="${enProceso}">0</p>
             </div>
         </div>
         <div class="stat-card">
             <div class="stat-icon"><i class="fas fa-check-double"></i></div>
             <div class="stat-info">
                 <p class="label">Entregados</p>
-                <p class="value">5</p>
+                <p class="value" th:text="${entregados}">0</p>
             </div>
         </div>
     </div>
@@ -89,22 +93,22 @@
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td>V-5423</td>
-                    <td>María López</td>
-                    <td>Av. Libertador 1234</td>
-                    <td>18/04/2026</td>
+                <tr th:each="envio : ${enviosPendientes}">
+                    <td th:text="'V-' + ${envio.venta.idVenta}">V-0000</td>
+                    <td th:text="${envio.venta.cliente.nombre + ' ' + envio.venta.cliente.apellido}">Nombre Completo</td>
+                    <td th:text="${envio.direccion.calle + ' ' + envio.direccion.altura}">Dirección</td>
+                    <td th:text="${#temporals.format(envio.fechaCreacion, 'dd/MM/yyyy')}">18/04/2026</td>
                     <td>
-                        <button class="btn-orange"><i class="fas fa-dolly"></i> Iniciar gestión</button>
+                        <form th:action="@{/envios/gestionar/{id}(id=${envio.idEnvio})}" method="get" style="margin: 0;">
+                            <button type="submit" class="btn-orange">
+                                <i class="fas fa-dolly"></i> Iniciar gestión
+                            </button>
+                        </form>
                     </td>
                 </tr>
-                <tr>
-                    <td>V-5424</td>
-                    <td>Juan Pérez</td>
-                    <td>San Martín 432</td>
-                    <td>18/04/2026</td>
-                    <td>
-                        <button class="btn-orange"><i class="fas fa-dolly"></i> Iniciar gestión</button>
+                <tr th:if="${#lists.isEmpty(enviosPendientes)}">
+                    <td colspan="5" style="text-align: center; padding: 20px; color: var(--text-muted);">
+                        No hay envíos pendientes actualmente.
                     </td>
                 </tr>
             </tbody>
