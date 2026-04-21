@@ -15,10 +15,10 @@ public class Usuario {
     @Column(name = "id_usuario")
     private Integer idUsuario;
 
-    @Column(name = "nombre", length = 20)
+    @Column(name = "nombre", length = 20, nullable = false)
     private String nombre;
 
-    @Column(name = "apellido", length = 20)
+    @Column(name = "apellido", length = 20, nullable = false)
     private String apellido;
 
     @Column(name = "dni", length = 8, unique = true, nullable = false)
@@ -27,7 +27,7 @@ public class Usuario {
     @Column(name = "telefono", length = 15)
     private String telefono;
 
-    @Column(name = "email", length = 50)
+    @Column(name = "email", length = 50, nullable = false)
     private String email;
 
     @Column(name = "contraseña", length = 200, nullable = false)
@@ -42,3 +42,4 @@ public class Usuario {
     @Column(name = "baja", length = 2)
     private String baja;
 }
+

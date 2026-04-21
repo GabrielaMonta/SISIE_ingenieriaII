@@ -11,7 +11,7 @@ El sistema utiliza una arquitectura **Cliente-Servidor** implementada con **Spri
 4.  **capadedominio**: Entidades y modelos de datos.
 
 ## Tecnologías
-- **Lenguaje**: Java 22
+- **Lenguaje**: Java 21
 - **Framework**: Spring Boot
 - **Gestión de dependencias**: Maven
 - **Base de Datos**: SQL Server

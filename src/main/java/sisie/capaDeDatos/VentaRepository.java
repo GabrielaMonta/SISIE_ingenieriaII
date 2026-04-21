@@ -1,9 +1,9 @@
 package sisie.capaDeDatos;
 
-import sisie.capaDeDominio.Usuario;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+import sisie.capaDeDominio.Venta;
 
 @Repository
-public interface UsuarioRepository extends JpaRepository<Usuario, Integer> {
+public interface VentaRepository extends JpaRepository<Venta, Integer> {
 }
