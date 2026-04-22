@@ -25,11 +25,6 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 
-
-import sisie.capaDeDominio.Envio;
-
-import java.util.List;
-
 @Service
 public class EnvioService {
 
@@ -57,6 +52,10 @@ public class EnvioService {
         return envioRepository.findByEstadoNombre("Pendiente");
     }
 
+    public List<Envio> obtenerEnviosNoPendientes() {
+        return envioRepository.findByEstadoNombreNot("Pendiente");
+    }
+
     @Transactional
     public void generarEnvioAleatorio(String emailUsuarioLogueado) {
         Random random = new Random();
@@ -64,7 +63,7 @@ public class EnvioService {
         // 1. Obtener listas de datos maestros
         List<Provincia> provincias = provinciaRepository.findAll();
         List<Transporte> transportes = transporteRepository.findAll();
-        Estado estadoPendiente = estadoRepository.findByNombre("Pendiente");
+        Estado estadoPendiente = estadoRepository.findByNombre("Pendiente").orElse(null);
         Usuario usuario = usuarioRepository.findByEmail(emailUsuarioLogueado).orElse(null);
 
         // 2. Crear Cliente con datos random
@@ -116,5 +115,30 @@ public class EnvioService {
         historialRepository.save(h);
     }
 
+    //Busca un envío y cambia su estado a 'En proceso'.
+    @Transactional
+    public void cambiarEstadoAEnProceso(Integer idEnvio, String emailUsuarioLogueado) {
+
+        Envio envio = envioRepository.findById(idEnvio).orElse(null);
+
+        Usuario usuario = usuarioRepository.findByEmail(emailUsuarioLogueado)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado: " + emailUsuarioLogueado));
+
+        Estado estadoEnProceso = estadoRepository.findByNombre("En proceso")
+                .orElseThrow(() -> new RuntimeException("Estado 'En proceso' no existe en BD"));
+
+        envio.setEstado(estadoEnProceso);
+        envioRepository.save(envio);
+
+        HistorialEnvio h = new HistorialEnvio();
+        h.setEnvio(envio);
+        h.setEstado(estadoEnProceso);
+        h.setFechaMovimiento(LocalDateTime.now());
+        h.setUsuario(usuario);
+        h.setMotivo("Inicio de gestión"); // Se asigna motivo, ya que es nullable = false en la BD
+
+        historialRepository.save(h);
+    }
+    
 
 }

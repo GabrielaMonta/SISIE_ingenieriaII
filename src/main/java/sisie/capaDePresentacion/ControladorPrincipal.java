@@ -4,6 +4,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.ui.Model;
 import java.security.Principal;
 import sisie.capaDeLogica.EnvioService;
@@ -47,7 +48,8 @@ public class ControladorPrincipal {
     }
 
     @GetMapping("/envios")
-    public String showEnvios() {
+    public String showEnvios(Model model) {
+        model.addAttribute("envios", envioService.obtenerEnviosNoPendientes());
         return "gestion-envios";
     }
 
@@ -61,5 +63,17 @@ public class ControladorPrincipal {
         // principal.getName() nos da el email del usuario que está logueado
         envioService.generarEnvioAleatorio(principal.getName());
         return "redirect:/logistica";
+    }
+
+    //Procesa la acción de iniciar gestión de un envío.
+    //Cambia el estado del envío a 'En proceso'.
+    @GetMapping("/envios/gestionar/{id}")
+    public String iniciarGestionEnvio(@PathVariable("id") Integer idEnvio, Principal principal) {
+        // principal.getName() nos da el email del usuario que está logueado
+        // Llamamos a la capa de lógica para procesar el cambio
+        envioService.cambiarEstadoAEnProceso(idEnvio, principal.getName());
+        
+        // Redirigimos de vuelta al panel de logística para ver la tabla actualizada
+        return  "redirect:/logistica";
     }
 }

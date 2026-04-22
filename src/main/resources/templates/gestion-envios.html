@@ -85,38 +85,29 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td>1001</td>
-                        <td>V-5421</td>
-                        <td>$1,200.00</td>
-                        <td>Gabriela Torres</td>
-                        <td>Estándar</td>
-                        <td>E. Ventas</td>
-                        <td>18/04/2026</td>
-                        <td>-</td>
-                        <td><span class="badge badge-new">Nuevo</span></td>
-                        <td class="action-cell">
-                            <button class="icon-btn text-warning" title="Ver"><i class="fas fa-eye"></i></button>
-                            <button class="icon-btn text-warning" title="Editar"><i class="fas fa-pencil-alt"></i></button>
-                            <button class="icon-btn text-danger" title="Eliminar"><i class="fas fa-trash"></i></button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>1002</td>
-                        <td>V-5422</td>
-                        <td>$3,500.00</td>
-                        <td>Carlos Sánchez</td>
-                        <td>Express</td>
-                        <td>E. Ventas</td>
-                        <td>17/04/2026</td>
-                        <td>18/04/2026</td>
-                        <td><span class="badge badge-delivered">Entregado</span></td>
-                        <td class="action-cell">
-                            <button class="icon-btn text-warning" title="Ver"><i class="fas fa-eye"></i></button>
-                            <button class="icon-btn text-warning" title="Editar"><i class="fas fa-pencil-alt"></i></button>
-                            <button class="icon-btn text-danger" title="Eliminar"><i class="fas fa-trash"></i></button>
-                        </td>
-                    </tr>
+                <tr th:each="envio : ${envios}">
+                    <td th:text="${envio.idEnvio}">1001</td>
+                    <td th:text="'V-' + ${envio.venta.idVenta}">V-5421</td>
+                    <td th:text="'$' + ${envio.costo}">$1,200.00</td>
+                    <td th:text="${envio.venta.cliente.nombre + ' ' + envio.venta.cliente.apellido}">Gabriela Torres</td>
+                    <td th:text="${envio.transporte.nombre}">Estándar</td>
+                    <td>Sistema</td>
+                    <td th:text="${#temporals.format(envio.fechaCreacion, 'dd/MM/yyyy')}">18/04/2026</td>
+                    <td>-</td>
+                    <td>
+                        <span th:class="'badge ' + (${envio.estado.nombre == 'En proceso'} ? 'badge-new' : 'badge-delivered')" th:text="${envio.estado.nombre}">Nuevo</span>
+                    </td>
+                    <td class="action-cell">
+                        <button class="icon-btn text-warning" title="Ver"><i class="fas fa-eye"></i></button>
+                        <button class="icon-btn text-warning" title="Editar"><i class="fas fa-pencil-alt"></i></button>
+                        <button class="icon-btn text-danger" title="Eliminar"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(envios)}">
+                    <td colspan="10" style="text-align: center; padding: 20px; color: var(--text-muted);">
+                        No hay envíos registrados.
+                    </td>
+                </tr>
                 </tbody>
             </table>
             <div class="table-footer">
