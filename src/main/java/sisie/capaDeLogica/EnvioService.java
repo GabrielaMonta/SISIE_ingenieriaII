@@ -17,7 +17,6 @@ import sisie.capaDeDominio.*;
 
 // Herramientas de Java y Spring
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional; 
 import java.util.List;
 import java.util.Random;
@@ -29,7 +28,6 @@ import java.time.LocalDateTime;
 public class EnvioService {
 
     @Autowired private EnvioRepository envioRepository;
-
     @Autowired private ClienteRepository clienteRepository;
     @Autowired private VentaRepository ventaRepository;
     @Autowired private DireccionRepository direccionRepository;
@@ -39,6 +37,9 @@ public class EnvioService {
     @Autowired private CiudadRepository ciudadRepository;
     @Autowired private HistorialEnvioRepository historialRepository;
     @Autowired private UsuarioRepository usuarioRepository; // Para el historial
+
+    @Autowired
+    private HistorialEnvioService historialEnvioService;
 
     public long contarTotalEnvios() {
         return envioRepository.count();
@@ -130,14 +131,8 @@ public class EnvioService {
         envio.setEstado(estadoEnProceso);
         envioRepository.save(envio);
 
-        HistorialEnvio h = new HistorialEnvio();
-        h.setEnvio(envio);
-        h.setEstado(estadoEnProceso);
-        h.setFechaMovimiento(LocalDateTime.now());
-        h.setUsuario(usuario);
-        h.setMotivo("Inicio de gestión"); // Se asigna motivo, ya que es nullable = false en la BD
-
-        historialRepository.save(h);
+        historialEnvioService.registrarCambioEstado(envio, estadoEnProceso, usuario);
+        
     }
     
 
