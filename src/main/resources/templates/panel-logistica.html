@@ -77,10 +77,18 @@
 
     <!-- Envíos Pendientes (Reemplaza a Acciones Rápidas) -->
     <section class="table-container" style="margin: 0 50px 50px;">
-        <h3 class="section-title"><i class="fas fa-exclamation-circle text-warning"></i> Envíos pendientes de gestión
-        </h3>
-        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px;">Estos envíos provienen del área de
-            ventas y requieren asignación de flete.</p>
+        <!-- Contenedor Flex para alinear Título y Botón -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 class="section-title" style="margin: 0;">
+                    <i class="fas fa-exclamation-circle text-warning"></i> Envíos pendientes de gestión
+                </h3>
+                
+                <form th:action="@{/logistica/generar-test}" method="post" style="margin: 0;">
+                    <button type="submit" class="status-btn btn-process" style="white-space: nowrap;">
+                        <i class="fas fa-plus-circle"></i> Generar Envío Aleatorio
+                    </button>
+                </form>
+            </div>
 
         <table class="data-table">
             <thead>

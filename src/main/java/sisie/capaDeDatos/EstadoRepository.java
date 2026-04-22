@@ -6,4 +6,5 @@ import sisie.capaDeDominio.Estado;
 
 @Repository
 public interface EstadoRepository extends JpaRepository<Estado, Integer> {
+    Estado findByNombre(String nombre); // Para buscar "Pendiente"
 }

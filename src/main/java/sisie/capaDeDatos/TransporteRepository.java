@@ -6,4 +6,5 @@ import sisie.capaDeDominio.Transporte;
 
 @Repository
 public interface TransporteRepository extends JpaRepository<Transporte, Integer> {
+    Transporte findByNombre(String nombre); // Para buscar "Andreani"
 }

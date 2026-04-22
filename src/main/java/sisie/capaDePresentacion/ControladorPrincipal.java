@@ -2,6 +2,7 @@ package sisie.capaDePresentacion;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.ui.Model;
 import java.security.Principal;
@@ -25,7 +26,9 @@ public class ControladorPrincipal {
     @GetMapping("/logistica")
     public String showLogisticaPanel(Model model, Principal principal) {
         if (principal != null) {
+            //Obtiene usuario logeado
             String email = principal.getName();
+            //controlador-UsuarioRepository-Base de datos
             usuarioRepository.findByEmail(email).ifPresent(usuario -> {
                 model.addAttribute("nombreUsuario", usuario.getNombre() + " " + usuario.getApellido());
             });
@@ -51,5 +54,12 @@ public class ControladorPrincipal {
     @GetMapping("/")
     public String index() {
         return "redirect:/login";
+    }
+
+    @PostMapping("/logistica/generar-test")
+    public String generarTest(Principal principal) {
+        // principal.getName() nos da el email del usuario que está logueado
+        envioService.generarEnvioAleatorio(principal.getName());
+        return "redirect:/logistica";
     }
 }
