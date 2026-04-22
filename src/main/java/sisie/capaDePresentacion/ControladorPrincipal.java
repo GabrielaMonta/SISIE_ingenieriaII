@@ -48,7 +48,13 @@ public class ControladorPrincipal {
     }
 
     @GetMapping("/envios")
-    public String showEnvios(Model model) {
+    public String showEnvios(Model model, Principal principal) {
+       if (principal != null) {
+        String email = principal.getName();
+        usuarioRepository.findByEmail(email).ifPresent(usuario -> {
+            model.addAttribute("nombreUsuario", usuario.getNombre() + " " + usuario.getApellido());
+        });
+    }
         model.addAttribute("envios", envioService.obtenerEnviosNoPendientes());
         return "gestion-envios";
     }
