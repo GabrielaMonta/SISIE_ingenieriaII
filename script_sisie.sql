@@ -98,7 +98,7 @@ CREATE TABLE envios (
 CREATE TABLE historial_envio (
     id_historial_envio INT IDENTITY(1,1) PRIMARY KEY,
     fecha_movimiento DATETIME NOT NULL,
-    motivo VARCHAR(30) NOT NULL,
+    motivo VARCHAR(150) NOT NULL,
     id_envio INT NOT NULL,
     id_usuario INT NOT NULL,
     id_estado INT NOT NULL,

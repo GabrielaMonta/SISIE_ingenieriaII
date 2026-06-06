@@ -40,6 +40,42 @@
         <div th:if="${mensajeExito}" class="alert alert-success" th:text="${mensajeExito}"></div>
         <div th:if="${mensajeError}" class="alert alert-error" th:text="${mensajeError}"></div>
 
+        <!-- Panel de Búsqueda y Filtrado -->
+        <form th:action="@{/envios}" method="get" class="filter-section">
+            <div class="filter-group">
+                <label for="idVenta"><i class="fas fa-receipt"></i> ID Venta</label>
+                <input type="number" id="idVenta" name="idVenta" class="filter-input" placeholder="Ej: 5421" th:value="${filtroIdVenta}">
+            </div>
+            <div class="filter-group">
+                <label for="codSeguimientoFiltro"><i class="fas fa-barcode"></i> Código Seguimiento</label>
+                <input type="text" id="codSeguimientoFiltro" name="codSeguimiento" class="filter-input" placeholder="Ej: AR123" th:value="${filtroCodSeguimiento}">
+            </div>
+            <div class="filter-group">
+                <label for="estado"><i class="fas fa-info-circle"></i> Estado</label>
+                <select id="estado" name="estado" class="filter-select">
+                    <option value="NoPendientes" th:selected="${filtroEstado == 'NoPendientes'}">No Pendientes</option>
+                    <option value="Pendiente" th:selected="${filtroEstado == 'Pendiente'}">Pendiente</option>
+                    <option value="En proceso" th:selected="${filtroEstado == 'En proceso'}">En proceso</option>
+                    <option value="En transito" th:selected="${filtroEstado == 'En transito'}">En tránsito</option>
+                    <option value="Entregado" th:selected="${filtroEstado == 'Entregado'}">Entregado</option>
+                    <option value="No Entregado" th:selected="${filtroEstado == 'No Entregado'}">No Entregado</option>
+                    <option value="Todos" th:selected="${filtroEstado == 'Todos'}">Todos</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="fechaDesde"><i class="fas fa-calendar-alt"></i> Desde</label>
+                <input type="date" id="fechaDesde" name="fechaDesde" class="filter-input" th:value="${filtroFechaDesde}">
+            </div>
+            <div class="filter-group">
+                <label for="fechaHasta"><i class="fas fa-calendar-alt"></i> Hasta</label>
+                <input type="date" id="fechaHasta" name="fechaHasta" class="filter-input" th:value="${filtroFechaHasta}">
+            </div>
+            <div class="filter-actions">
+                <button type="submit" class="btn-dark"><i class="fas fa-search"></i> Buscar</button>
+                <a th:href="@{/envios}" class="btn-outline" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center;"><i class="fas fa-undo"></i> Limpiar</a>
+            </div>
+        </form>
+
         <div class="table-container">
             <div class="table-header-flex">
                 <h3 class="section-title" style="margin: 0;"><i class="fas fa-list"></i> Listado de Envíos</h3>
@@ -89,6 +125,15 @@
                                 style="padding: 4px 8px; font-size: 0.8rem; background-color: #10B981;"
                                 th:onclick="abrirModalResultado([[${envio.idEnvio}]])">
                             <i class="fas fa-check-circle"></i> Registrar Resultado
+                        </button>
+
+                        <!-- Botón Editar Seguimiento (Solo para En Tránsito) -->
+                        <button th:if="${envio.estadoActual.nombre == 'En transito'}" 
+                                class="icon-btn text-warning" 
+                                style="border-color: var(--accent-color); color: var(--accent-color);"
+                                title="Editar Código de Seguimiento" 
+                                th:onclick="abrirModalEditarSeguimiento([[${envio.idEnvio}]], [[${envio.codSeguimiento}]])">
+                            <i class="fas fa-pencil-alt"></i>
                         </button>
 
                         <!-- Botón Ver Historial (Para todos los estados) -->
@@ -149,7 +194,7 @@
                     <p style="margin-bottom: 16px; font-size: 0.95rem; color: var(--text-muted);">
                         Seleccione el resultado final de la entrega para este envío:
                     </p>
-                    <div class="form-group" style="display: flex; gap: 20px; justify-content: center;">
+                    <div class="form-group" style="display: flex; gap: 20px; justify-content: center; margin-bottom: 20px;">
                         <label style="display: flex; align-items: center; gap: 8px; font-weight: 600; cursor: pointer; color: #065F46;">
                             <input type="radio" name="resultado" value="Entregado" checked style="transform: scale(1.2);">
                             <i class="fas fa-check" style="color: #10B981;"></i> Entregado
@@ -159,10 +204,37 @@
                             <i class="fas fa-times" style="color: #EF4444;"></i> No Entregado
                         </label>
                     </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label class="form-label" for="motivoResultado"><i class="fas fa-comment"></i> Motivo / Observación del Resultado</label>
+                        <textarea id="motivoResultado" name="motivo" class="form-input" rows="3" placeholder="Ej: Entregado a la recepcionista, Dirección incorrecta, Cliente ausente..." style="resize: vertical;" maxlength="150" required></textarea>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn-outline" onclick="cerrarModal('modalResultado')">Cancelar</button>
                     <button type="submit" class="btn-orange" style="background-color: var(--primary-bg);">Guardar Resultado</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL EDITAR SEGUIMIENTO -->
+    <div id="modalEditarSeguimiento" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-pencil-alt"></i> Editar Código de Seguimiento</h3>
+                <button class="close-btn" onclick="cerrarModal('modalEditarSeguimiento')">&times;</button>
+            </div>
+            <form th:action="@{/envios/despachar}" method="post">
+                <input type="hidden" id="editar-id" name="idEnvio">
+                <div class="modal-body">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label class="form-label" for="editarCodSeguimiento"><i class="fas fa-barcode"></i> Nuevo Código de Seguimiento</label>
+                        <input type="text" id="editarCodSeguimiento" name="codSeguimiento" class="form-input" placeholder="Ej: AR987654321" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-outline" onclick="cerrarModal('modalEditarSeguimiento')">Cancelar</button>
+                    <button type="submit" class="btn-orange">Guardar Cambios</button>
                 </div>
             </form>
         </div>
@@ -204,7 +276,14 @@
 
         function abrirModalResultado(idEnvio) {
             document.getElementById('resultado-id').value = idEnvio;
+            document.getElementById('motivoResultado').value = '';
             document.getElementById('modalResultado').style.display = 'flex';
+        }
+
+        function abrirModalEditarSeguimiento(idEnvio, codSeguimiento) {
+            document.getElementById('editar-id').value = idEnvio;
+            document.getElementById('editarCodSeguimiento').value = codSeguimiento || '';
+            document.getElementById('modalEditarSeguimiento').style.display = 'flex';
         }
 
         function cerrarModal(modalId) {
@@ -267,7 +346,7 @@
 
         // Cerrar modales al hacer clic fuera del contenido
         window.onclick = function(event) {
-            const modales = ['modalDespachar', 'modalResultado', 'modalHistorial'];
+            const modales = ['modalDespachar', 'modalResultado', 'modalHistorial', 'modalEditarSeguimiento'];
             modales.forEach(id => {
                 const modal = document.getElementById(id);
                 if (event.target === modal) {

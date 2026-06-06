@@ -60,14 +60,28 @@ public class ControladorPrincipal {
     }
 
     @GetMapping("/envios")
-    public String showEnvios(Model model, Principal principal) {
-       if (principal != null) {
-        String email = principal.getName();
-        usuarioRepository.findByEmail(email).ifPresent(usuario -> {
-            model.addAttribute("nombreUsuario", usuario.getNombre() + " " + usuario.getApellido());
-        });
-    }
-        model.addAttribute("envios", envioService.obtenerEnviosNoPendientes());
+    public String showEnvios(
+            @RequestParam(value = "idVenta", required = false) Integer idVenta,
+            @RequestParam(value = "codSeguimiento", required = false) String codSeguimiento,
+            @RequestParam(value = "estado", required = false, defaultValue = "NoPendientes") String estado,
+            @RequestParam(value = "fechaDesde", required = false) String fechaDesde,
+            @RequestParam(value = "fechaHasta", required = false) String fechaHasta,
+            Model model,
+            Principal principal) {
+        if (principal != null) {
+            String email = principal.getName();
+            usuarioRepository.findByEmail(email).ifPresent(usuario -> {
+                model.addAttribute("nombreUsuario", usuario.getNombre() + " " + usuario.getApellido());
+            });
+        }
+        model.addAttribute("envios", envioService.filtrarEnvios(idVenta, codSeguimiento, estado, fechaDesde, fechaHasta));
+        
+        model.addAttribute("filtroIdVenta", idVenta);
+        model.addAttribute("filtroCodSeguimiento", codSeguimiento);
+        model.addAttribute("filtroEstado", estado);
+        model.addAttribute("filtroFechaDesde", fechaDesde);
+        model.addAttribute("filtroFechaHasta", fechaHasta);
+        
         return "gestion-envios";
     }
 
@@ -101,10 +115,10 @@ public class ControladorPrincipal {
                                  Principal principal,
                                  RedirectAttributes redirectAttributes) {
         try {
-            envioService.despacharEnvio(idEnvio, codSeguimiento, principal != null ? principal.getName() : null);
-            redirectAttributes.addFlashAttribute("mensajeExito", "Envío despachado con éxito. Ahora está En Tránsito.");
+            envioService.despacharOEditarSeguimiento(idEnvio, codSeguimiento, principal != null ? principal.getName() : null);
+            redirectAttributes.addFlashAttribute("mensajeExito", "Código de seguimiento registrado con éxito.");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("mensajeError", "Error al despachar el envío: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("mensajeError", "Error al registrar el seguimiento: " + e.getMessage());
         }
         return "redirect:/envios";
     }
@@ -112,10 +126,11 @@ public class ControladorPrincipal {
     @PostMapping("/envios/registrar-resultado")
     public String registrarResultado(@RequestParam("idEnvio") Integer idEnvio,
                                      @RequestParam("resultado") String resultado,
+                                     @RequestParam("motivo") String motivo,
                                      Principal principal,
                                      RedirectAttributes redirectAttributes) {
         try {
-            envioService.registrarResultado(idEnvio, resultado, principal != null ? principal.getName() : null);
+            envioService.registrarResultado(idEnvio, resultado, motivo, principal != null ? principal.getName() : null);
             redirectAttributes.addFlashAttribute("mensajeExito", "Resultado de entrega registrado con éxito.");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("mensajeError", "Error al registrar el resultado: " + e.getMessage());

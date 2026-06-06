@@ -17,7 +17,7 @@ public class HistorialEnvio {
     @Column(name = "fecha_movimiento", nullable = false)
     private LocalDateTime fechaMovimiento;
 
-    @Column(name = "motivo", length = 30, nullable = false)
+    @Column(name = "motivo", length = 150, nullable = false)
     private String motivo;
 
     @ManyToOne

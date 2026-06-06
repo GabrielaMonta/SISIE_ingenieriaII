@@ -58,6 +58,9 @@ public class Envio {
     @Transient
     private final List<ObservadorEnvio> observadores = new ArrayList<>();
 
+    @Transient
+    private String motivoTransicion;
+
     // Patrón Observer
     public void agregarObservador(ObservadorEnvio observador) {
         if (!observadores.contains(observador)) {

@@ -26,19 +26,22 @@ public class RegistradorHistorial implements ObservadorEnvio {
         h.setEstado(envio.getEstadoActual());
         h.setFechaMovimiento(LocalDateTime.now());
 
-        // Determinar el motivo según el estado actual
-        String motivo = "Cambio de estado";
-        EstadoEnvio estado = envio.getEstadoActual();
-        if (estado instanceof EstadoPendiente) {
-            motivo = "Generación de envío";
-        } else if (estado instanceof EstadoEnProceso) {
-            motivo = "Inicio de gestión";
-        } else if (estado instanceof EstadoEnTransito) {
-            motivo = "Envío en tránsito";
-        } else if (estado instanceof EstadoEntregado) {
-            motivo = "Envío entregado";
-        } else if (estado instanceof EstadoNoEntregado) {
-            motivo = "Envío no entregado";
+        // Determinar el motivo según el estado actual o el motivo personalizado
+        String motivo = envio.getMotivoTransicion();
+        if (motivo == null || motivo.trim().isEmpty()) {
+            motivo = "Cambio de estado";
+            EstadoEnvio estado = envio.getEstadoActual();
+            if (estado instanceof EstadoPendiente) {
+                motivo = "Generación de envío";
+            } else if (estado instanceof EstadoEnProceso) {
+                motivo = "Inicio de gestión";
+            } else if (estado instanceof EstadoEnTransito) {
+                motivo = "Envío en tránsito";
+            } else if (estado instanceof EstadoEntregado) {
+                motivo = "Envío entregado";
+            } else if (estado instanceof EstadoNoEntregado) {
+                motivo = "Envío no entregado";
+            }
         }
         h.setMotivo(motivo);
 

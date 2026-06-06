@@ -4,7 +4,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import sisie.capaDeDatos.EnvioRepository;
-import sisie.capaDeDatos.TransporteRepository;
 import sisie.capaDeDatos.HistorialEnvioRepository;
 import sisie.capaDeDominio.*;
 import java.math.BigDecimal;
@@ -15,9 +14,6 @@ public class EnvioService {
 
     @Autowired
     private EnvioRepository envioRepository;
-
-    @Autowired
-    private TransporteRepository transporteRepository;
 
     @Autowired
     private HistorialEnvioRepository historialRepository;
@@ -100,9 +96,9 @@ public class EnvioService {
         envioRepository.save(envio);
     }
 
-    // Despacha un envio, asigna codigo de seguimiento y cambia el estado a En Tránsito
+    // Registra o edita el código de seguimiento de un envío
     @Transactional
-    public void despacharEnvio(Integer idEnvio, String codSeguimiento, String emailUsuarioLogueado) {
+    public void despacharOEditarSeguimiento(Integer idEnvio, String codSeguimiento, String emailUsuarioLogueado) {
         if (codSeguimiento == null || codSeguimiento.trim().isEmpty()) {
             throw new IllegalArgumentException("El código de seguimiento no puede estar vacío.");
         }
@@ -117,19 +113,31 @@ public class EnvioService {
         // Registrar observadores
         registrarObservadores(envio);
 
-        // Asignar código de seguimiento
+        String oldCod = envio.getCodSeguimiento();
+        if (oldCod != null && oldCod.trim().equalsIgnoreCase(codSeguimiento.trim())) {
+            throw new IllegalArgumentException("El código de seguimiento ingresado es idéntico al actual. No se realizaron cambios.");
+        }
+
         envio.setCodSeguimiento(codSeguimiento.trim());
 
-        // Transicionar a En Tránsito
-        envio.transicionar();
+        if (oldCod == null || oldCod.trim().isEmpty()) {
+            // Si el envío no tenía seguimiento, pasa automáticamente al estado En Tránsito
+            envio.setMotivoTransicion("Asignación de código de seguimiento");
+            envio.transicionar();
+            envio.setMotivoTransicion(null);
+        } else {
+            // Si ya tenía seguimiento y únicamente se modifica el código, el estado permanece en En Tránsito
+            envio.setMotivoTransicion("Corrección de código de seguimiento");
+            envio.notificarObservadores();
+            envio.setMotivoTransicion(null);
+        }
 
-        // Persistir el cambio
         envioRepository.save(envio);
     }
 
-    // Registra el resultado de un envio, cambia el estado a Entregado o No Entregado
+    // Registra el resultado de un envio, cambia el estado a Entregado o No Entregado con motivo
     @Transactional
-    public void registrarResultado(Integer idEnvio, String resultado, String emailUsuarioLogueado) {
+    public void registrarResultado(Integer idEnvio, String resultado, String motivo, String emailUsuarioLogueado) {
         Envio envio = envioRepository.findById(idEnvio)
                 .orElseThrow(() -> new RuntimeException("Envío no encontrado: ID " + idEnvio));
 
@@ -145,11 +153,71 @@ public class EnvioService {
             throw new IllegalArgumentException("Resultado no válido: " + resultado);
         }
 
+        // Si se especificó un motivo, lo asignamos antes de transicionar (con truncado de seguridad a 150 caracteres)
+        if (motivo != null && !motivo.trim().isEmpty()) {
+            String motivoFinal = motivo.trim();
+            if (motivoFinal.length() > 150) {
+                motivoFinal = motivoFinal.substring(0, 150);
+            }
+            envio.setMotivoTransicion(motivoFinal);
+        }
+
         // Ejecutar la transición mediante patrón State
         envio.registrarResultado(estadoFinal);
 
+        // Limpiar el motivo de la transición
+        envio.setMotivoTransicion(null);
+
         // Guardar cambios
         envioRepository.save(envio);
+    }
+
+    // Filtra los envíos aplicando criterios combinados
+    public List<Envio> filtrarEnvios(Integer idVenta, String codSeguimiento, String estado, String fechaDesdeStr, String fechaHastaStr) {
+        List<Envio> todos = envioRepository.findAll();
+        java.time.LocalDate fechaDesde = (fechaDesdeStr != null && !fechaDesdeStr.trim().isEmpty()) ? java.time.LocalDate.parse(fechaDesdeStr) : null;
+        java.time.LocalDate fechaHasta = (fechaHastaStr != null && !fechaHastaStr.trim().isEmpty()) ? java.time.LocalDate.parse(fechaHastaStr) : null;
+
+        List<Envio> filtrados = todos.stream().filter(e -> {
+            // 1. ID Venta
+            if (idVenta != null) {
+                if (e.getVenta() == null || !e.getVenta().getIdVenta().equals(idVenta)) {
+                    return false;
+                }
+            }
+            // 2. Código de seguimiento
+            if (codSeguimiento != null && !codSeguimiento.trim().isEmpty()) {
+                if (e.getCodSeguimiento() == null || !e.getCodSeguimiento().toLowerCase().contains(codSeguimiento.trim().toLowerCase())) {
+                    return false;
+                }
+            }
+            // 3. Estado
+            if (estado != null && !estado.trim().isEmpty()) {
+                if ("NoPendientes".equalsIgnoreCase(estado)) {
+                    if ("Pendiente".equalsIgnoreCase(e.getEstadoActual().getNombre())) {
+                        return false;
+                    }
+                } else if (!"Todos".equalsIgnoreCase(estado)) {
+                    if (!e.getEstadoActual().getNombre().equalsIgnoreCase(estado)) {
+                        return false;
+                    }
+                }
+            }
+            // 4. Rango de Fechas
+            if (fechaDesde != null) {
+                if (e.getFechaCreacion().toLocalDate().isBefore(fechaDesde)) {
+                    return false;
+                }
+            }
+            if (fechaHasta != null) {
+                if (e.getFechaCreacion().toLocalDate().isAfter(fechaHasta)) {
+                    return false;
+                }
+            }
+            return true;
+        }).collect(java.util.stream.Collectors.toList());
+
+        return registrarObservadores(filtrados);
     }
 
     // Obtiene el historial de envios ordenado por fecha
