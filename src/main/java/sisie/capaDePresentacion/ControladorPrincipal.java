@@ -42,7 +42,7 @@ public class ControladorPrincipal {
         model.addAttribute("entregados", envioService.contarEnviosPorEstado("Entregado"));
         
         // Llamado a la función especificada por el usuario
-        model.addAttribute("enviosPendientes", envioService.ObtenerEnviosPendientes());
+        model.addAttribute("enviosPendientes", envioService.obtenerEnviosPorEstado("Pendiente"));
 
         return "panel-logistica";
     }

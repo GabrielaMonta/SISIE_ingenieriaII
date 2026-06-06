@@ -11,7 +11,7 @@ public class HistorialEnvioService {
     
     @Autowired private HistorialEnvioRepository historialRepository;
 
-    public void registrarCambioEstado(Envio envio, Estado estado, Usuario usuario){
+    public void registrarCambioEstado(Envio envio, EstadoEnvio estado, Usuario usuario){
 
         
         HistorialEnvio h = new HistorialEnvio();

@@ -30,5 +30,5 @@ public class HistorialEnvio {
 
     @ManyToOne
     @JoinColumn(name = "id_estado", nullable = false)
-    private Estado estado;
+    private EstadoEnvio estado;
 }

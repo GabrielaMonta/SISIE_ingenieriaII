@@ -2,12 +2,16 @@ package sisie.capaDeDominio;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.ToString;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "envios")
 @Data
+@ToString(exclude = {"observadores"})
 public class Envio {
 
     @Id
@@ -35,8 +39,54 @@ public class Envio {
 
     @ManyToOne
     @JoinColumn(name = "id_estado", nullable = false)
-    private Estado estado;
+    private EstadoEnvio estadoActual;
 
     @Column(name = "fecha_creacion", nullable = false)
     private LocalDateTime fechaCreacion;
+
+    @Transient
+    private final List<ObservadorEnvio> observadores = new ArrayList<>();
+
+    // Patrón Observer
+    public void agregarObservador(ObservadorEnvio observador) {
+        if (!observadores.contains(observador)) {
+            observadores.add(observador);
+        }
+    }
+
+    public void eliminarObservador(ObservadorEnvio observador) {
+        observadores.remove(observador);
+    }
+
+    public void notificarObservadores() {
+        for (ObservadorEnvio obs : observadores) {
+            obs.actualizar(this);
+        }
+    }
+
+    // Patrón State
+    public void transicionar() {
+        if (this.estadoActual != null) {
+            this.estadoActual.transicionar(this);
+            notificarObservadores();
+        }
+    }
+
+    public void IniciarGestion() {
+        if (!(this.estadoActual instanceof EstadoPendiente)) {
+            throw new IllegalStateException("Solo se puede iniciar la gestión de un envío que esté en estado Pendiente.");
+        }
+        this.transicionar();
+    }
+
+    public void registrarResultado(EstadoEnvio estadoFinal) {
+        if (!(this.estadoActual instanceof EstadoEnTransito)) {
+            throw new IllegalStateException("Solo se puede registrar el resultado final desde el estado En tránsito.");
+        }
+        if (!(estadoFinal instanceof EstadoEntregado) && !(estadoFinal instanceof EstadoNoEntregado)) {
+            throw new IllegalArgumentException("El estado final debe ser Entregado o No entregado.");
+        }
+        this.estadoActual = estadoFinal;
+        notificarObservadores();
+    }
 }

@@ -2,27 +2,14 @@ package sisie.capaDeLogica;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import sisie.capaDeDatos.EnvioRepository;
-import sisie.capaDeDatos.ClienteRepository;
-import sisie.capaDeDatos.VentaRepository;
-import sisie.capaDeDatos.DireccionRepository;
-import sisie.capaDeDatos.EstadoRepository;
-import sisie.capaDeDatos.TransporteRepository;
-import sisie.capaDeDatos.ProvinciaRepository;
-import sisie.capaDeDatos.CiudadRepository;
-import sisie.capaDeDatos.HistorialEnvioRepository;
-import sisie.capaDeDatos.UsuarioRepository;
-
+import org.springframework.transaction.annotation.Transactional;
+import sisie.capaDeDatos.*;
 import sisie.capaDeDominio.*;
 
-// Herramientas de Java y Spring
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional; 
-import java.util.List;
-import java.util.Random;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-
+import java.util.List;
+import java.util.Random;
 
 @Service
 public class EnvioService {
@@ -31,30 +18,47 @@ public class EnvioService {
     @Autowired private ClienteRepository clienteRepository;
     @Autowired private VentaRepository ventaRepository;
     @Autowired private DireccionRepository direccionRepository;
-    @Autowired private EstadoRepository estadoRepository;
+    @Autowired private EstadoEnvioRepository estadoEnvioRepository;
     @Autowired private TransporteRepository transporteRepository;
     @Autowired private ProvinciaRepository provinciaRepository;
     @Autowired private CiudadRepository ciudadRepository;
     @Autowired private HistorialEnvioRepository historialRepository;
-    @Autowired private UsuarioRepository usuarioRepository; // Para el historial
+    @Autowired private UsuarioRepository usuarioRepository;
 
     @Autowired
-    private HistorialEnvioService historialEnvioService;
+    private List<ObservadorEnvio> observadores;
+
+    // Métodos auxiliares para registrar observadores en los envíos
+    private Envio registrarObservadores(Envio envio) {
+        if (envio != null) {
+            for (ObservadorEnvio obs : observadores) {
+                envio.agregarObservador(obs);
+            }
+        }
+        return envio;
+    }
+
+    private List<Envio> registrarObservadores(List<Envio> envios) {
+        if (envios != null) {
+            for (Envio e : envios) {
+                registrarObservadores(e);
+            }
+        }
+        return envios;
+    }
 
     public long contarTotalEnvios() {
         return envioRepository.count();
     }
 
     public long contarEnviosPorEstado(String estado) {
-        return envioRepository.countByEstadoNombre(estado);
+        return envioRepository.countByEstadoActualNombre(estado);
     }
 
-    public List<Envio> ObtenerEnviosPendientes() {
-        return envioRepository.findByEstadoNombre("Pendiente");
-    }
-
-    public List<Envio> obtenerEnviosNoPendientes() {
-        return envioRepository.findByEstadoNombreNot("Pendiente");
+    // Unificación de la consulta de envíos por estado
+    public List<Envio> obtenerEnviosPorEstado(String estado) {
+        List<Envio> envios = envioRepository.findByEstadoActualNombre(estado);
+        return registrarObservadores(envios);
     }
 
     @Transactional
@@ -64,8 +68,7 @@ public class EnvioService {
         // 1. Obtener listas de datos maestros
         List<Provincia> provincias = provinciaRepository.findAll();
         List<Transporte> transportes = transporteRepository.findAll();
-        Estado estadoPendiente = estadoRepository.findByNombre("Pendiente").orElse(null);
-        Usuario usuario = usuarioRepository.findByEmail(emailUsuarioLogueado).orElse(null);
+        EstadoEnvio estadoPendiente = EstadoProvider.getPendiente();
 
         // 2. Crear Cliente con datos random
         String[] nombres = {"Juan", "Maria", "Ricardo", "Elena", "Lucas"};
@@ -100,40 +103,32 @@ public class EnvioService {
         Envio e = new Envio();
         e.setVenta(v);
         e.setDireccion(d);
-        e.setEstado(estadoPendiente);
+        e.setEstadoActual(estadoPendiente);
         e.setTransporte(transportes.get(random.nextInt(transportes.size())));
         e.setCosto(new BigDecimal(random.nextInt(5000) + 1500));
         e.setFechaCreacion(LocalDateTime.now());
+        
+        // Registrar observadores antes de disparar la primera notificación
+        registrarObservadores(e);
         e = envioRepository.save(e);
 
-        // 6. Crear Historial
-        HistorialEnvio h = new HistorialEnvio();
-        h.setEnvio(e);
-        h.setEstado(estadoPendiente);
-        h.setFechaMovimiento(LocalDateTime.now());
-        h.setMotivo("Generación automática");
-        h.setUsuario(usuario);
-        historialRepository.save(h);
+        // 6. Notificar a los observadores para registrar en historial
+        e.notificarObservadores();
     }
 
-    //Busca un envío y cambia su estado a 'En proceso'.
+    // Busca un envío y cambia su estado a 'En proceso' usando patrones
     @Transactional
     public void cambiarEstadoAEnProceso(Integer idEnvio, String emailUsuarioLogueado) {
+        Envio envio = envioRepository.findById(idEnvio)
+                .orElseThrow(() -> new RuntimeException("Envío no encontrado: ID " + idEnvio));
 
-        Envio envio = envioRepository.findById(idEnvio).orElse(null);
+        // Registrar observadores
+        registrarObservadores(envio);
 
-        Usuario usuario = usuarioRepository.findByEmail(emailUsuarioLogueado)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado: " + emailUsuarioLogueado));
+        // Cambiar estado mediante patrón State (el cual gatilla notificaciones automáticas)
+        envio.IniciarGestion();
 
-        Estado estadoEnProceso = estadoRepository.findByNombre("En proceso")
-                .orElseThrow(() -> new RuntimeException("Estado 'En proceso' no existe en BD"));
-
-        envio.setEstado(estadoEnProceso);
+        // Persistir el cambio
         envioRepository.save(envio);
-
-        historialEnvioService.registrarCambioEstado(envio, estadoEnProceso, usuario);
-        
     }
-    
-
 }

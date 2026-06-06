@@ -8,7 +8,7 @@ import java.util.List;
 @Repository
 public interface EnvioRepository extends JpaRepository<Envio, Integer> {
     
-    Long countByEstadoNombre(String nombreEstado); 
-    List<Envio> findByEstadoNombre(String nombreEstado);
-    List<Envio> findByEstadoNombreNot(String nombreEstado);
+    Long countByEstadoActualNombre(String nombreEstado); 
+    List<Envio> findByEstadoActualNombre(String nombreEstado);
+    List<Envio> findByEstadoActualNombreNot(String nombreEstado);
 }

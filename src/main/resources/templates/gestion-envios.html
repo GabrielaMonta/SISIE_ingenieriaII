@@ -99,7 +99,7 @@
                     <td th:text="${#temporals.format(envio.fechaCreacion, 'dd/MM/yyyy')}">18/04/2026</td>
                     <td>-</td>
                     <td>
-                        <span th:class="'badge ' + (${envio.estado.nombre == 'En proceso'} ? 'badge-new' : 'badge-delivered')" th:text="${envio.estado.nombre}">Nuevo</span>
+                        <span th:class="'badge ' + (${envio.estadoActual.nombre == 'En proceso'} ? 'badge-new' : 'badge-delivered')" th:text="${envio.estadoActual.nombre}">Nuevo</span>
                     </td>
                     <td class="action-cell">
                         <button class="icon-btn text-warning" title="Ver"><i class="fas fa-eye"></i></button>
