@@ -26,7 +26,8 @@ CREATE TABLE cliente (
     id_cliente INT IDENTITY(1,1) PRIMARY KEY,
     dni VARCHAR(8) NOT NULL UNIQUE,
     nombre VARCHAR(20) NOT NULL,
-    apellido VARCHAR(20) NOT NULL
+    apellido VARCHAR(20) NOT NULL,
+    email VARCHAR(50)
 );
 
 -- 4. Tabla: transporte

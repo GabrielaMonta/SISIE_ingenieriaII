@@ -68,6 +68,7 @@ public class VentaService {
         c.setNombre(nombres[random.nextInt(nombres.length)]);
         c.setApellido(apellidos[random.nextInt(apellidos.length)]);
         c.setDni(String.valueOf(10000000 + random.nextInt(80000000)));
+        c.setEmail("gabimonta@hotmail.com.ar");
         c = clienteRepository.save(c);
 
         // 2. Crear Ciudad y Dirección
