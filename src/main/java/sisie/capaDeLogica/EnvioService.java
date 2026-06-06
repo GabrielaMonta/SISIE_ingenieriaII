@@ -3,37 +3,24 @@ package sisie.capaDeLogica;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import sisie.capaDeDatos.*;
+import sisie.capaDeDatos.EnvioRepository;
+import sisie.capaDeDatos.TransporteRepository;
+import sisie.capaDeDatos.HistorialEnvioRepository;
 import sisie.capaDeDominio.*;
-
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Random;
 
 @Service
 public class EnvioService {
 
     @Autowired
     private EnvioRepository envioRepository;
-    @Autowired
-    private ClienteRepository clienteRepository;
-    @Autowired
-    private VentaRepository ventaRepository;
-    @Autowired
-    private DireccionRepository direccionRepository;
-    @Autowired
-    private EstadoEnvioRepository estadoEnvioRepository;
+
     @Autowired
     private TransporteRepository transporteRepository;
-    @Autowired
-    private ProvinciaRepository provinciaRepository;
-    @Autowired
-    private CiudadRepository ciudadRepository;
+
     @Autowired
     private HistorialEnvioRepository historialRepository;
-    @Autowired
-    private UsuarioRepository usuarioRepository;
 
     @Autowired
     private List<ObservadorEnvio> observadores;
@@ -57,7 +44,7 @@ public class EnvioService {
         return envios;
     }
 
-    // Metodos de consulta
+    // Métodos de consulta
     public long contarTotalEnvios() {
         return envioRepository.count();
     }
@@ -66,7 +53,6 @@ public class EnvioService {
         return envioRepository.countByEstadoActualNombre(estado);
     }
 
-    // Unificación de la consulta de envíos por estado
     public List<Envio> obtenerEnviosPorEstado(String estado) {
         List<Envio> envios = envioRepository.findByEstadoActualNombre(estado);
         return registrarObservadores(envios);
@@ -77,59 +63,25 @@ public class EnvioService {
         return registrarObservadores(envios);
     }
 
+    /**
+     * Registra un nuevo envío en el sistema usando el constructor limpio de la entidad
+     * e inicializando los observadores para guardar el historial inicial.
+     */
     @Transactional
-    public void generarEnvioAleatorio(String emailUsuarioLogueado) {
-        Random random = new Random();
-
-        // 1. Obtener listas de datos maestros
-        List<Provincia> provincias = provinciaRepository.findAll();
-        List<Transporte> transportes = transporteRepository.findAll();
+    public Envio registrarNuevoEnvio(Venta venta, Direccion direccion, Transporte transporte, BigDecimal costo) {
         EstadoEnvio estadoPendiente = EstadoProvider.getPendiente();
 
-        // 2. Crear Cliente con datos random
-        String[] nombres = { "Juan", "Maria", "Ricardo", "Elena", "Lucas" };
-        String[] apellidos = { "Perez", "Gomez", "Duarte", "Fernandez" };
-        Cliente c = new Cliente();
-        c.setNombre(nombres[random.nextInt(nombres.length)]);
-        c.setApellido(apellidos[random.nextInt(apellidos.length)]);
-        c.setDni(String.valueOf(10000000 + random.nextInt(80000000)));
-        c = clienteRepository.save(c);
+        // Instanciación usando el constructor nuevo de Envio
+        Envio e = new Envio(venta, direccion, estadoPendiente, transporte, costo);
 
-        // 3. Crear Ciudad y Dirección
-        Ciudad ciu = new Ciudad();
-        ciu.setNombre("Ciudad " + (random.nextInt(900) + 100));
-        ciu.setProvincia(provincias.get(random.nextInt(provincias.size())));
-        ciu = ciudadRepository.save(ciu);
-
-        Direccion d = new Direccion();
-        d.setCalle("Calle Falsa");
-        d.setAltura(String.valueOf(random.nextInt(5000)));
-        d.setCodigoPostal(String.valueOf(random.nextInt(9000) + 1000));
-        d.setCliente(c);
-        d.setCiudad(ciu);
-        d = direccionRepository.save(d);
-
-        // 4. Crear Venta
-        Venta v = new Venta();
-        v.setCliente(c);
-        v.setFechaCreacion(LocalDateTime.now());
-        v = ventaRepository.save(v);
-
-        // 5. Crear Envío
-        Envio e = new Envio();
-        e.setVenta(v);
-        e.setDireccion(d);
-        e.setEstadoActual(estadoPendiente);
-        e.setTransporte(transportes.get(random.nextInt(transportes.size())));
-        e.setCosto(new BigDecimal(random.nextInt(5000) + 1500));
-        e.setFechaCreacion(LocalDateTime.now());
-
-        // Registrar observadores antes de disparar la primera notificación
+        // Registrar observadores
         registrarObservadores(e);
         e = envioRepository.save(e);
 
-        // 6. Notificar a los observadores para registrar en historial
+        // Notificar para guardar el historial inicial
         e.notificarObservadores();
+
+        return e;
     }
 
     // Busca un envío y cambia su estado a 'En proceso' usando patrones
@@ -141,16 +93,14 @@ public class EnvioService {
         // Registrar observadores
         registrarObservadores(envio);
 
-        // Cambiar estado mediante patrón State (el cual gatilla notificaciones
-        // automáticas)
+        // Cambiar estado mediante patrón State (el cual gatilla notificaciones automáticas)
         envio.IniciarGestion();
 
         // Persistir el cambio
         envioRepository.save(envio);
     }
 
-    // Despacha un envio, asigna codigo de seguimiento y cambia el estado a En
-    // Tránsito
+    // Despacha un envio, asigna codigo de seguimiento y cambia el estado a En Tránsito
     @Transactional
     public void despacharEnvio(Integer idEnvio, String codSeguimiento, String emailUsuarioLogueado) {
         if (codSeguimiento == null || codSeguimiento.trim().isEmpty()) {
@@ -177,8 +127,7 @@ public class EnvioService {
         envioRepository.save(envio);
     }
 
-    // Registra el resultado de un envio, cambia el estado a Entregado o No
-    // Entregado
+    // Registra el resultado de un envio, cambia el estado a Entregado o No Entregado
     @Transactional
     public void registrarResultado(Integer idEnvio, String resultado, String emailUsuarioLogueado) {
         Envio envio = envioRepository.findById(idEnvio)

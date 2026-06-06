@@ -44,6 +44,17 @@ public class Envio {
     @Column(name = "fecha_creacion", nullable = false)
     private LocalDateTime fechaCreacion;
 
+    public Envio() {}
+
+    public Envio(Venta venta, Direccion direccion, EstadoEnvio estadoActual, Transporte transporte, BigDecimal costo) {
+        this.venta = venta;
+        this.direccion = direccion;
+        this.estadoActual = estadoActual;
+        this.transporte = transporte;
+        this.costo = costo;
+        this.fechaCreacion = LocalDateTime.now();
+    }
+
     @Transient
     private final List<ObservadorEnvio> observadores = new ArrayList<>();
 

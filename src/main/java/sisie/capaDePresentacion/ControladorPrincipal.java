@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import sisie.capaDeLogica.EnvioService;
+import sisie.capaDeLogica.VentaService;
 import sisie.capaDeDatos.UsuarioRepository;
 
 @Controller
@@ -23,6 +24,9 @@ public class ControladorPrincipal {
 
     @Autowired
     private EnvioService envioService;
+
+    @Autowired
+    private VentaService ventaService;
 
     @Autowired
     private UsuarioRepository usuarioRepository;
@@ -75,7 +79,7 @@ public class ControladorPrincipal {
     @PostMapping("/logistica/generar-test")
     public String generarTest(Principal principal) {
         // principal.getName() nos da el email del usuario que está logueado
-        envioService.generarEnvioAleatorio(principal.getName());
+        ventaService.generarVentaYEnvioAleatorio();
         return "redirect:/logistica";
     }
 
