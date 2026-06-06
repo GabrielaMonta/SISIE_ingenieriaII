@@ -11,4 +11,5 @@ public interface EnvioRepository extends JpaRepository<Envio, Integer> {
     Long countByEstadoActualNombre(String nombreEstado); 
     List<Envio> findByEstadoActualNombre(String nombreEstado);
     List<Envio> findByEstadoActualNombreNot(String nombreEstado);
+    Envio findByCodSeguimiento(String codSeguimiento);
 }

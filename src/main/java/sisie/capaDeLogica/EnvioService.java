@@ -14,16 +14,26 @@ import java.util.Random;
 @Service
 public class EnvioService {
 
-    @Autowired private EnvioRepository envioRepository;
-    @Autowired private ClienteRepository clienteRepository;
-    @Autowired private VentaRepository ventaRepository;
-    @Autowired private DireccionRepository direccionRepository;
-    @Autowired private EstadoEnvioRepository estadoEnvioRepository;
-    @Autowired private TransporteRepository transporteRepository;
-    @Autowired private ProvinciaRepository provinciaRepository;
-    @Autowired private CiudadRepository ciudadRepository;
-    @Autowired private HistorialEnvioRepository historialRepository;
-    @Autowired private UsuarioRepository usuarioRepository;
+    @Autowired
+    private EnvioRepository envioRepository;
+    @Autowired
+    private ClienteRepository clienteRepository;
+    @Autowired
+    private VentaRepository ventaRepository;
+    @Autowired
+    private DireccionRepository direccionRepository;
+    @Autowired
+    private EstadoEnvioRepository estadoEnvioRepository;
+    @Autowired
+    private TransporteRepository transporteRepository;
+    @Autowired
+    private ProvinciaRepository provinciaRepository;
+    @Autowired
+    private CiudadRepository ciudadRepository;
+    @Autowired
+    private HistorialEnvioRepository historialRepository;
+    @Autowired
+    private UsuarioRepository usuarioRepository;
 
     @Autowired
     private List<ObservadorEnvio> observadores;
@@ -47,6 +57,7 @@ public class EnvioService {
         return envios;
     }
 
+    // Metodos de consulta
     public long contarTotalEnvios() {
         return envioRepository.count();
     }
@@ -61,6 +72,11 @@ public class EnvioService {
         return registrarObservadores(envios);
     }
 
+    public List<Envio> obtenerEnviosNoPendientes() {
+        List<Envio> envios = envioRepository.findByEstadoActualNombreNot("Pendiente");
+        return registrarObservadores(envios);
+    }
+
     @Transactional
     public void generarEnvioAleatorio(String emailUsuarioLogueado) {
         Random random = new Random();
@@ -71,8 +87,8 @@ public class EnvioService {
         EstadoEnvio estadoPendiente = EstadoProvider.getPendiente();
 
         // 2. Crear Cliente con datos random
-        String[] nombres = {"Juan", "Maria", "Ricardo", "Elena", "Lucas"};
-        String[] apellidos = {"Perez", "Gomez", "Duarte", "Fernandez"};
+        String[] nombres = { "Juan", "Maria", "Ricardo", "Elena", "Lucas" };
+        String[] apellidos = { "Perez", "Gomez", "Duarte", "Fernandez" };
         Cliente c = new Cliente();
         c.setNombre(nombres[random.nextInt(nombres.length)]);
         c.setApellido(apellidos[random.nextInt(apellidos.length)]);
@@ -107,7 +123,7 @@ public class EnvioService {
         e.setTransporte(transportes.get(random.nextInt(transportes.size())));
         e.setCosto(new BigDecimal(random.nextInt(5000) + 1500));
         e.setFechaCreacion(LocalDateTime.now());
-        
+
         // Registrar observadores antes de disparar la primera notificación
         registrarObservadores(e);
         e = envioRepository.save(e);
@@ -125,10 +141,70 @@ public class EnvioService {
         // Registrar observadores
         registrarObservadores(envio);
 
-        // Cambiar estado mediante patrón State (el cual gatilla notificaciones automáticas)
+        // Cambiar estado mediante patrón State (el cual gatilla notificaciones
+        // automáticas)
         envio.IniciarGestion();
 
         // Persistir el cambio
         envioRepository.save(envio);
+    }
+
+    // Despacha un envio, asigna codigo de seguimiento y cambia el estado a En
+    // Tránsito
+    @Transactional
+    public void despacharEnvio(Integer idEnvio, String codSeguimiento, String emailUsuarioLogueado) {
+        if (codSeguimiento == null || codSeguimiento.trim().isEmpty()) {
+            throw new IllegalArgumentException("El código de seguimiento no puede estar vacío.");
+        }
+        Envio duplicado = envioRepository.findByCodSeguimiento(codSeguimiento.trim());
+        if (duplicado != null && !duplicado.getIdEnvio().equals(idEnvio)) {
+            throw new IllegalArgumentException("Ya existe otro envío con el mismo código de seguimiento.");
+        }
+
+        Envio envio = envioRepository.findById(idEnvio)
+                .orElseThrow(() -> new RuntimeException("Envío no encontrado: ID " + idEnvio));
+
+        // Registrar observadores
+        registrarObservadores(envio);
+
+        // Asignar código de seguimiento
+        envio.setCodSeguimiento(codSeguimiento.trim());
+
+        // Transicionar a En Tránsito
+        envio.transicionar();
+
+        // Persistir el cambio
+        envioRepository.save(envio);
+    }
+
+    // Registra el resultado de un envio, cambia el estado a Entregado o No
+    // Entregado
+    @Transactional
+    public void registrarResultado(Integer idEnvio, String resultado, String emailUsuarioLogueado) {
+        Envio envio = envioRepository.findById(idEnvio)
+                .orElseThrow(() -> new RuntimeException("Envío no encontrado: ID " + idEnvio));
+
+        // Registrar observadores
+        registrarObservadores(envio);
+
+        EstadoEnvio estadoFinal;
+        if ("Entregado".equalsIgnoreCase(resultado)) {
+            estadoFinal = EstadoProvider.getEntregado();
+        } else if ("No Entregado".equalsIgnoreCase(resultado) || "NoEntregado".equalsIgnoreCase(resultado)) {
+            estadoFinal = EstadoProvider.getNoEntregado();
+        } else {
+            throw new IllegalArgumentException("Resultado no válido: " + resultado);
+        }
+
+        // Ejecutar la transición mediante patrón State
+        envio.registrarResultado(estadoFinal);
+
+        // Guardar cambios
+        envioRepository.save(envio);
+    }
+
+    // Obtiene el historial de envios ordenado por fecha
+    public List<HistorialEnvio> obtenerHistorial(Integer idEnvio) {
+        return historialRepository.findByEnvioIdEnvioOrderByFechaMovimientoAsc(idEnvio);
     }
 }

@@ -34,56 +34,26 @@
     <div class="main-content">
         <div class="page-header">
             <h2><i class="fas fa-truck-moving" style="margin-right: 10px;"></i> Gestión de envíos</h2>
-            
-            <div class="status-filters">
-                <button class="status-btn btn-new">Nuevos</button>
-                <button class="status-btn btn-process">En Proceso</button>
-                <button class="status-btn btn-delivered">Entregados</button>
-            </div>
         </div>
 
-        <div class="filter-section">
-            <div class="filter-group">
-                <label>Filtrar por:</label>
-                <select class="filter-select">
-                    <option>Todos</option>
-                    <option>En camino</option>
-                </select>
-            </div>
-            <div class="filter-group">
-                <label>Fecha desde</label>
-                <input type="date" class="filter-input">
-            </div>
-            <div class="filter-group">
-                <label>Fecha hasta</label>
-                <input type="date" class="filter-input">
-            </div>
-            <div class="filter-actions">
-                <button class="btn-dark">Filtrar</button>
-                <button class="btn-outline">Limpiar</button>
-            </div>
-        </div>
+        <!-- Alertas de Éxito / Error -->
+        <div th:if="${mensajeExito}" class="alert alert-success" th:text="${mensajeExito}"></div>
+        <div th:if="${mensajeError}" class="alert alert-error" th:text="${mensajeError}"></div>
 
         <div class="table-container">
             <div class="table-header-flex">
                 <h3 class="section-title" style="margin: 0;"><i class="fas fa-list"></i> Listado de Envíos</h3>
-                <div class="search-box">
-                    <input type="text" placeholder="Buscar productos...">
-                    <i class="fas fa-search search-icon"></i>
-                </div>
             </div>
 
             <table class="data-table">
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>ID_Venta</th>
-                        <th>Costo</th>
+                        <th>ID Venta</th>
                         <th>Destinatario</th>
-                        <th>Servicio</th>
-                        <th>Registrado por</th>
-                        <th>Fecha envío</th>
-                        <th>Fecha recepción</th>
+                        <th>Transporte</th>
+                        <th>Código de Seguimiento</th>
+                        <th>Fecha de Creación</th>
                         <th>Estado</th>
                         <th>Acciones</th>
                     </tr>
@@ -92,33 +62,219 @@
                 <tr th:each="envio : ${envios}">
                     <td th:text="${envio.idEnvio}">1001</td>
                     <td th:text="'V-' + ${envio.venta.idVenta}">V-5421</td>
-                    <td th:text="'$' + ${envio.costo}">$1,200.00</td>
                     <td th:text="${envio.venta.cliente.nombre + ' ' + envio.venta.cliente.apellido}">Gabriela Torres</td>
                     <td th:text="${envio.transporte.nombre}">Estándar</td>
-                    <td>Sistema</td>
-                    <td th:text="${#temporals.format(envio.fechaCreacion, 'dd/MM/yyyy')}">18/04/2026</td>
-                    <td>-</td>
+                    <td th:text="${envio.codSeguimiento != null ? envio.codSeguimiento : 'Sin asignar'}">Sin asignar</td>
+                    <td th:text="${#temporals.format(envio.fechaCreacion, 'dd/MM/yyyy HH:mm')}">18/04/2026 15:30</td>
                     <td>
-                        <span th:class="'badge ' + (${envio.estadoActual.nombre == 'En proceso'} ? 'badge-new' : 'badge-delivered')" th:text="${envio.estadoActual.nombre}">Nuevo</span>
+                        <span th:class="'badge ' + (
+                            ${envio.estadoActual.nombre == 'En proceso'} ? 'badge-process' : (
+                            ${envio.estadoActual.nombre == 'En transito'} ? 'badge-transit' : (
+                            ${envio.estadoActual.nombre == 'Entregado'} ? 'badge-delivered' : 'badge-not-delivered'
+                            ))
+                        )" th:text="${envio.estadoActual.nombre}">Nuevo</span>
                     </td>
                     <td class="action-cell">
-                        <button class="icon-btn text-warning" title="Ver"><i class="fas fa-eye"></i></button>
-                        <button class="icon-btn text-warning" title="Editar"><i class="fas fa-pencil-alt"></i></button>
-                        <button class="icon-btn text-danger" title="Eliminar"><i class="fas fa-trash"></i></button>
+                        <!-- Botón Despachar (Solo para En Proceso) -->
+                        <button th:if="${envio.estadoActual.nombre == 'En proceso'}" 
+                                class="status-btn btn-process" 
+                                style="padding: 4px 8px; font-size: 0.8rem;"
+                                th:onclick="abrirModalDespachar([[${envio.idEnvio}]], [[${envio.transporte.nombre}]], [[${envio.costo}]])">
+                            <i class="fas fa-shipping-fast"></i> Despachar
+                        </button>
+
+                        <!-- Botón Registrar Resultado (Solo para En Tránsito) -->
+                        <button th:if="${envio.estadoActual.nombre == 'En transito'}" 
+                                class="status-btn btn-new" 
+                                style="padding: 4px 8px; font-size: 0.8rem; background-color: #10B981;"
+                                th:onclick="abrirModalResultado([[${envio.idEnvio}]])">
+                            <i class="fas fa-check-circle"></i> Registrar Resultado
+                        </button>
+
+                        <!-- Botón Ver Historial (Para todos los estados) -->
+                        <button class="icon-btn text-warning" 
+                                title="Ver Historial" 
+                                th:onclick="abrirModalHistorial([[${envio.idEnvio}]])">
+                            <i class="fas fa-history"></i>
+                        </button>
                     </td>
                 </tr>
                 <tr th:if="${#lists.isEmpty(envios)}">
-                    <td colspan="10" style="text-align: center; padding: 20px; color: var(--text-muted);">
+                    <td colspan="8" style="text-align: center; padding: 20px; color: var(--text-muted);">
                         No hay envíos registrados.
                     </td>
                 </tr>
                 </tbody>
             </table>
-            <div class="table-footer">
-                <button class="btn-text">Next <i class="fas fa-arrow-right"></i></button>
+        </div>
+    </div>
+
+    <!-- MODAL DESPACHAR -->
+    <div id="modalDespachar" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-shipping-fast"></i> Despachar Envío</h3>
+                <button class="close-btn" onclick="cerrarModal('modalDespachar')">&times;</button>
+            </div>
+            <form th:action="@{/envios/despachar}" method="post">
+                <input type="hidden" id="despachar-id" name="idEnvio">
+                <div class="modal-body">
+                    <div style="background-color: #F3F4F6; padding: 12px; border-radius: 8px; margin-bottom: 16px; font-size: 0.9rem;">
+                        <strong>Transporte Asignado:</strong> <span id="despachar-info-transporte"></span><br>
+                        <strong>Costo de Envío:</strong> <span id="despachar-info-costo"></span>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label class="form-label" for="codSeguimiento"><i class="fas fa-barcode"></i> Código de Seguimiento</label>
+                        <input type="text" id="codSeguimiento" name="codSeguimiento" class="form-input" placeholder="Ej: AR987654321" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-outline" onclick="cerrarModal('modalDespachar')">Cancelar</button>
+                    <button type="submit" class="btn-orange">Confirmar Despacho</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL REGISTRAR RESULTADO -->
+    <div id="modalResultado" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-check-circle"></i> Registrar Resultado de Entrega</h3>
+                <button class="close-btn" onclick="cerrarModal('modalResultado')">&times;</button>
+            </div>
+            <form th:action="@{/envios/registrar-resultado}" method="post">
+                <input type="hidden" id="resultado-id" name="idEnvio">
+                <div class="modal-body">
+                    <p style="margin-bottom: 16px; font-size: 0.95rem; color: var(--text-muted);">
+                        Seleccione el resultado final de la entrega para este envío:
+                    </p>
+                    <div class="form-group" style="display: flex; gap: 20px; justify-content: center;">
+                        <label style="display: flex; align-items: center; gap: 8px; font-weight: 600; cursor: pointer; color: #065F46;">
+                            <input type="radio" name="resultado" value="Entregado" checked style="transform: scale(1.2);">
+                            <i class="fas fa-check" style="color: #10B981;"></i> Entregado
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; font-weight: 600; cursor: pointer; color: #991B1B;">
+                            <input type="radio" name="resultado" value="No Entregado" style="transform: scale(1.2);">
+                            <i class="fas fa-times" style="color: #EF4444;"></i> No Entregado
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-outline" onclick="cerrarModal('modalResultado')">Cancelar</button>
+                    <button type="submit" class="btn-orange" style="background-color: var(--primary-bg);">Guardar Resultado</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL HISTORIAL (TIMELINE) -->
+    <div id="modalHistorial" class="modal-overlay">
+        <div class="modal-content" style="max-width: 550px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-history"></i> Trazabilidad del Envío</h3>
+                <button class="close-btn" onclick="cerrarModal('modalHistorial')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="historial-loading" style="text-align: center; padding: 20px; color: var(--text-muted);">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 1.5rem; margin-bottom: 8px;"></i><br>
+                    Cargando historial de movimientos...
+                </div>
+                <div id="historial-empty" style="text-align: center; padding: 20px; display: none; color: var(--text-muted);">
+                    No hay movimientos registrados para este envío.
+                </div>
+                <div id="historial-timeline" class="timeline" style="display: none;">
+                    <!-- Se rellena dinámicamente con JS -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-dark" onclick="cerrarModal('modalHistorial')">Cerrar</button>
             </div>
         </div>
     </div>
 
+    <script th:inline="javascript">
+        function abrirModalDespachar(idEnvio, transporte, costo) {
+            document.getElementById('despachar-id').value = idEnvio;
+            document.getElementById('despachar-info-transporte').textContent = transporte;
+            document.getElementById('despachar-info-costo').textContent = '$' + costo;
+            document.getElementById('codSeguimiento').value = '';
+            document.getElementById('modalDespachar').style.display = 'flex';
+        }
+
+        function abrirModalResultado(idEnvio) {
+            document.getElementById('resultado-id').value = idEnvio;
+            document.getElementById('modalResultado').style.display = 'flex';
+        }
+
+        function cerrarModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        function abrirModalHistorial(idEnvio) {
+            document.getElementById('historial-loading').style.display = 'block';
+            document.getElementById('historial-timeline').style.display = 'none';
+            document.getElementById('historial-empty').style.display = 'none';
+            document.getElementById('modalHistorial').style.display = 'flex';
+
+            fetch('/envios/historial/' + idEnvio)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Error al obtener el historial');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    document.getElementById('historial-loading').style.display = 'none';
+                    const timeline = document.getElementById('historial-timeline');
+                    timeline.innerHTML = '';
+
+                    if (!data || data.length === 0) {
+                        document.getElementById('historial-empty').style.display = 'block';
+                        return;
+                    }
+
+                    data.forEach(item => {
+                        const itemDiv = document.createElement('div');
+                        itemDiv.className = 'timeline-item';
+
+                        let badgeClass = 'bg-pending';
+                        if (item.estado === 'En proceso') badgeClass = 'bg-process';
+                        else if (item.estado === 'En transito') badgeClass = 'bg-transit';
+                        else if (item.estado === 'Entregado') badgeClass = 'bg-delivered';
+                        else if (item.estado === 'No entregado' || item.estado === 'No Entregado') badgeClass = 'bg-not-delivered';
+
+                        itemDiv.innerHTML = `
+                            <div class="timeline-badge ${badgeClass}"></div>
+                            <div class="timeline-content">
+                                <div class="timeline-header">
+                                    <span class="timeline-title">${item.estado}</span>
+                                    <span class="timeline-date">${item.fecha}</span>
+                                </div>
+                                <div class="timeline-desc">${item.motivo}</div>
+                                <div class="timeline-user"><i class="fas fa-user" style="font-size:0.75rem;"></i> Responsable: ${item.usuario}</div>
+                            </div>
+                        `;
+                        timeline.appendChild(itemDiv);
+                    });
+                    timeline.style.display = 'block';
+                })
+                .catch(err => {
+                    document.getElementById('historial-loading').innerHTML = '<span style="color:#dc2626;"><i class="fas fa-exclamation-triangle"></i> Error al cargar el historial.</span>';
+                    console.error(err);
+                });
+        }
+
+        // Cerrar modales al hacer clic fuera del contenido
+        window.onclick = function(event) {
+            const modales = ['modalDespachar', 'modalResultado', 'modalHistorial'];
+            modales.forEach(id => {
+                const modal = document.getElementById(id);
+                if (event.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
+        }
+    </script>
 </body>
 </html>

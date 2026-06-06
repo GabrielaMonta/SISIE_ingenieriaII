@@ -5,8 +5,16 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.ui.Model;
 import java.security.Principal;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import sisie.capaDeLogica.EnvioService;
 import sisie.capaDeDatos.UsuarioRepository;
 
@@ -81,5 +89,50 @@ public class ControladorPrincipal {
         
         // Redirigimos de vuelta al panel de logística para ver la tabla actualizada
         return  "redirect:/logistica";
+    }
+
+    @PostMapping("/envios/despachar")
+    public String despacharEnvio(@RequestParam("idEnvio") Integer idEnvio,
+                                 @RequestParam("codSeguimiento") String codSeguimiento,
+                                 Principal principal,
+                                 RedirectAttributes redirectAttributes) {
+        try {
+            envioService.despacharEnvio(idEnvio, codSeguimiento, principal != null ? principal.getName() : null);
+            redirectAttributes.addFlashAttribute("mensajeExito", "Envío despachado con éxito. Ahora está En Tránsito.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("mensajeError", "Error al despachar el envío: " + e.getMessage());
+        }
+        return "redirect:/envios";
+    }
+
+    @PostMapping("/envios/registrar-resultado")
+    public String registrarResultado(@RequestParam("idEnvio") Integer idEnvio,
+                                     @RequestParam("resultado") String resultado,
+                                     Principal principal,
+                                     RedirectAttributes redirectAttributes) {
+        try {
+            envioService.registrarResultado(idEnvio, resultado, principal != null ? principal.getName() : null);
+            redirectAttributes.addFlashAttribute("mensajeExito", "Resultado de entrega registrado con éxito.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("mensajeError", "Error al registrar el resultado: " + e.getMessage());
+        }
+        return "redirect:/envios";
+    }
+
+    @GetMapping("/envios/historial/{id}")
+    @ResponseBody
+    public List<Map<String, Object>> verHistorial(@PathVariable("id") Integer idEnvio) {
+        List<sisie.capaDeDominio.HistorialEnvio> historial = envioService.obtenerHistorial(idEnvio);
+        List<Map<String, Object>> response = new ArrayList<>();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+        for (sisie.capaDeDominio.HistorialEnvio h : historial) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("fecha", h.getFechaMovimiento().format(formatter));
+            map.put("estado", h.getEstado().getNombre());
+            map.put("motivo", h.getMotivo());
+            map.put("usuario", h.getUsuario() != null ? (h.getUsuario().getNombre() + " " + h.getUsuario().getApellido()) : "Sistema");
+            response.add(map);
+        }
+        return response;
     }
 }
