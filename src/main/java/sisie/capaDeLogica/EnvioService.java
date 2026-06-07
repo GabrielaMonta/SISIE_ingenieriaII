@@ -96,14 +96,24 @@ public class EnvioService {
         envioRepository.save(envio);
     }
 
-    // Registra el código de seguimiento inicial de un envío y lo transiciona a En Tránsito
+    // Método unificado para registrar o modificar el código de seguimiento (coincide con diagrama de secuencia)
     @Transactional
-    public void despacharEnvio(Integer idEnvio, String codSeguimiento, String emailUsuarioLogueado) {
+    public void actualizarDatosEnvio(Integer idEnvio, String codSeguimiento, String emailUsuarioLogueado) {
         validarCodigoSeguimiento(codSeguimiento, idEnvio);
 
         Envio envio = envioRepository.findById(idEnvio)
                 .orElseThrow(() -> new RuntimeException("Envío no encontrado: ID " + idEnvio));
 
+        String oldCod = envio.getCodSeguimiento();
+        if (oldCod == null || oldCod.trim().isEmpty()) {
+            despacharEnvio(envio, codSeguimiento, emailUsuarioLogueado);
+        } else {
+            editarCodigoSeguimiento(envio, codSeguimiento, emailUsuarioLogueado);
+        }
+    }
+
+    // Registra el código de seguimiento inicial de un envío y lo transiciona a En Tránsito
+    private void despacharEnvio(Envio envio, String codSeguimiento, String emailUsuarioLogueado) {
         // Registrar observadores
         registrarObservadores(envio);
 
@@ -116,13 +126,7 @@ public class EnvioService {
     }
 
     // Edita un código de seguimiento existente manteniendo el estado En Tránsito
-    @Transactional
-    public void editarCodigoSeguimiento(Integer idEnvio, String codSeguimiento, String emailUsuarioLogueado) {
-        validarCodigoSeguimiento(codSeguimiento, idEnvio);
-
-        Envio envio = envioRepository.findById(idEnvio)
-                .orElseThrow(() -> new RuntimeException("Envío no encontrado: ID " + idEnvio));
-
+    private void editarCodigoSeguimiento(Envio envio, String codSeguimiento, String emailUsuarioLogueado) {
         // Registrar observadores
         registrarObservadores(envio);
 
@@ -151,7 +155,7 @@ public class EnvioService {
 
     // Registra el resultado de un envio, cambia el estado a Entregado o No Entregado con motivo
     @Transactional
-    public void registrarResultado(Integer idEnvio, String resultado, String motivo, String emailUsuarioLogueado) {
+    public void registrarResultadoEnvio(Integer idEnvio, String resultado, String motivo, String emailUsuarioLogueado) {
         Envio envio = envioRepository.findById(idEnvio)
                 .orElseThrow(() -> new RuntimeException("Envío no encontrado: ID " + idEnvio));
 

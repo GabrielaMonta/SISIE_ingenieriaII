@@ -115,7 +115,7 @@ public class ControladorPrincipal {
                                  Principal principal,
                                  RedirectAttributes redirectAttributes) {
         try {
-            envioService.despacharEnvio(idEnvio, codSeguimiento, principal != null ? principal.getName() : null);
+            envioService.actualizarDatosEnvio(idEnvio, codSeguimiento, principal != null ? principal.getName() : null);
             redirectAttributes.addFlashAttribute("mensajeExito", "Envío despachado con éxito. Ahora está En Tránsito.");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("mensajeError", "Error al despachar el envío: " + e.getMessage());
@@ -129,7 +129,7 @@ public class ControladorPrincipal {
                                      Principal principal,
                                      RedirectAttributes redirectAttributes) {
         try {
-            envioService.editarCodigoSeguimiento(idEnvio, codSeguimiento, principal != null ? principal.getName() : null);
+            envioService.actualizarDatosEnvio(idEnvio, codSeguimiento, principal != null ? principal.getName() : null);
             redirectAttributes.addFlashAttribute("mensajeExito", "Código de seguimiento modificado con éxito.");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("mensajeError", "Error al modificar el seguimiento: " + e.getMessage());
@@ -144,7 +144,7 @@ public class ControladorPrincipal {
                                      Principal principal,
                                      RedirectAttributes redirectAttributes) {
         try {
-            envioService.registrarResultado(idEnvio, resultado, motivo, principal != null ? principal.getName() : null);
+            envioService.registrarResultadoEnvio(idEnvio, resultado, motivo, principal != null ? principal.getName() : null);
             redirectAttributes.addFlashAttribute("mensajeExito", "Resultado de entrega registrado con éxito.");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("mensajeError", "Error al registrar el resultado: " + e.getMessage());
