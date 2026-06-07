@@ -90,7 +90,7 @@ public class EnvioService {
         registrarObservadores(envio);
 
         // Cambiar estado mediante patrón State (el cual gatilla notificaciones automáticas)
-        envio.IniciarGestion();
+        envio.cambiarEstado();
 
         // Persistir el cambio
         envioRepository.save(envio);
@@ -109,7 +109,7 @@ public class EnvioService {
 
         envio.setCodSeguimiento(codSeguimiento.trim());
         envio.setMotivoTransicion("Asignación de código de seguimiento");
-        envio.transicionar();
+        envio.cambiarEstado();
         envio.setMotivoTransicion(null);
 
         envioRepository.save(envio);

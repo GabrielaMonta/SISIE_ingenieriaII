@@ -79,18 +79,11 @@ public class Envio {
     }
 
     // Patrón State
-    public void transicionar() {
+    public void cambiarEstado() {
         if (this.estadoActual != null) {
             this.estadoActual.transicionar(this);
             notificarObservadores();
         }
-    }
-
-    public void IniciarGestion() {
-        if (!(this.estadoActual instanceof EstadoPendiente)) {
-            throw new IllegalStateException("Solo se puede iniciar la gestión de un envío que esté en estado Pendiente.");
-        }
-        this.transicionar();
     }
 
     public void registrarResultado(EstadoEnvio estadoFinal) {
