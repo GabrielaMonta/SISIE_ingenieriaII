@@ -224,7 +224,7 @@
                 <h3><i class="fas fa-pencil-alt"></i> Editar Código de Seguimiento</h3>
                 <button class="close-btn" onclick="cerrarModal('modalEditarSeguimiento')">&times;</button>
             </div>
-            <form th:action="@{/envios/despachar}" method="post">
+            <form th:action="@{/envios/editar-seguimiento}" method="post">
                 <input type="hidden" id="editar-id" name="idEnvio">
                 <div class="modal-body">
                     <div class="form-group" style="margin-bottom: 0;">

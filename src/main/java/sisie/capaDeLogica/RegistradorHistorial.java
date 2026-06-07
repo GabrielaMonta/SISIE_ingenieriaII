@@ -21,6 +21,10 @@ public class RegistradorHistorial implements ObservadorEnvio {
 
     @Override
     public void actualizar(Envio envio) {
+        registrarCambioEstado(envio);
+    }
+
+    private void registrarCambioEstado(Envio envio) {
         HistorialEnvio h = new HistorialEnvio();
         h.setEnvio(envio);
         h.setEstado(envio.getEstadoActual());

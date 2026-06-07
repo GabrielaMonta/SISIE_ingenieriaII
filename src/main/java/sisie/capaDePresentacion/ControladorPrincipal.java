@@ -115,10 +115,24 @@ public class ControladorPrincipal {
                                  Principal principal,
                                  RedirectAttributes redirectAttributes) {
         try {
-            envioService.despacharOEditarSeguimiento(idEnvio, codSeguimiento, principal != null ? principal.getName() : null);
-            redirectAttributes.addFlashAttribute("mensajeExito", "Código de seguimiento registrado con éxito.");
+            envioService.despacharEnvio(idEnvio, codSeguimiento, principal != null ? principal.getName() : null);
+            redirectAttributes.addFlashAttribute("mensajeExito", "Envío despachado con éxito. Ahora está En Tránsito.");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("mensajeError", "Error al registrar el seguimiento: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("mensajeError", "Error al despachar el envío: " + e.getMessage());
+        }
+        return "redirect:/envios";
+    }
+
+    @PostMapping("/envios/editar-seguimiento")
+    public String editarSeguimiento(@RequestParam("idEnvio") Integer idEnvio,
+                                     @RequestParam("codSeguimiento") String codSeguimiento,
+                                     Principal principal,
+                                     RedirectAttributes redirectAttributes) {
+        try {
+            envioService.editarCodigoSeguimiento(idEnvio, codSeguimiento, principal != null ? principal.getName() : null);
+            redirectAttributes.addFlashAttribute("mensajeExito", "Código de seguimiento modificado con éxito.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("mensajeError", "Error al modificar el seguimiento: " + e.getMessage());
         }
         return "redirect:/envios";
     }

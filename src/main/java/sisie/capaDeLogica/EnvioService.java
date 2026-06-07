@@ -96,16 +96,29 @@ public class EnvioService {
         envioRepository.save(envio);
     }
 
-    // Registra o edita el código de seguimiento de un envío
+    // Registra el código de seguimiento inicial de un envío y lo transiciona a En Tránsito
     @Transactional
-    public void despacharOEditarSeguimiento(Integer idEnvio, String codSeguimiento, String emailUsuarioLogueado) {
-        if (codSeguimiento == null || codSeguimiento.trim().isEmpty()) {
-            throw new IllegalArgumentException("El código de seguimiento no puede estar vacío.");
-        }
-        Envio duplicado = envioRepository.findByCodSeguimiento(codSeguimiento.trim());
-        if (duplicado != null && !duplicado.getIdEnvio().equals(idEnvio)) {
-            throw new IllegalArgumentException("Ya existe otro envío con el mismo código de seguimiento.");
-        }
+    public void despacharEnvio(Integer idEnvio, String codSeguimiento, String emailUsuarioLogueado) {
+        validarCodigoSeguimiento(codSeguimiento, idEnvio);
+
+        Envio envio = envioRepository.findById(idEnvio)
+                .orElseThrow(() -> new RuntimeException("Envío no encontrado: ID " + idEnvio));
+
+        // Registrar observadores
+        registrarObservadores(envio);
+
+        envio.setCodSeguimiento(codSeguimiento.trim());
+        envio.setMotivoTransicion("Asignación de código de seguimiento");
+        envio.transicionar();
+        envio.setMotivoTransicion(null);
+
+        envioRepository.save(envio);
+    }
+
+    // Edita un código de seguimiento existente manteniendo el estado En Tránsito
+    @Transactional
+    public void editarCodigoSeguimiento(Integer idEnvio, String codSeguimiento, String emailUsuarioLogueado) {
+        validarCodigoSeguimiento(codSeguimiento, idEnvio);
 
         Envio envio = envioRepository.findById(idEnvio)
                 .orElseThrow(() -> new RuntimeException("Envío no encontrado: ID " + idEnvio));
@@ -119,20 +132,21 @@ public class EnvioService {
         }
 
         envio.setCodSeguimiento(codSeguimiento.trim());
-
-        if (oldCod == null || oldCod.trim().isEmpty()) {
-            // Si el envío no tenía seguimiento, pasa automáticamente al estado En Tránsito
-            envio.setMotivoTransicion("Asignación de código de seguimiento");
-            envio.transicionar();
-            envio.setMotivoTransicion(null);
-        } else {
-            // Si ya tenía seguimiento y únicamente se modifica el código, el estado permanece en En Tránsito
-            envio.setMotivoTransicion("Corrección de código de seguimiento");
-            envio.notificarObservadores();
-            envio.setMotivoTransicion(null);
-        }
+        envio.setMotivoTransicion("Corrección de código de seguimiento");
+        envio.notificarObservadores();
+        envio.setMotivoTransicion(null);
 
         envioRepository.save(envio);
+    }
+
+    private void validarCodigoSeguimiento(String codSeguimiento, Integer idEnvio) {
+        if (codSeguimiento == null || codSeguimiento.trim().isEmpty()) {
+            throw new IllegalArgumentException("El código de seguimiento no puede estar vacío.");
+        }
+        Envio duplicado = envioRepository.findByCodSeguimiento(codSeguimiento.trim());
+        if (duplicado != null && !duplicado.getIdEnvio().equals(idEnvio)) {
+            throw new IllegalArgumentException("Ya existe otro envío con el mismo código de seguimiento.");
+        }
     }
 
     // Registra el resultado de un envio, cambia el estado a Entregado o No Entregado con motivo
