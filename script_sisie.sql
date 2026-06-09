@@ -116,3 +116,68 @@ GO
 CREATE USER appuser FOR LOGIN appuser;
 ALTER ROLE db_owner ADD MEMBER appuser;
 GO
+
+-- 11. Procedimientos Almacenados --
+
+-- A. Actualizar código de seguimiento y estado
+CREATE PROCEDURE sp_ActualizarSeguimientoYEstado
+    @id_envio INT,
+    @cod_seguimiento VARCHAR(50),
+    @id_estado INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    BEGIN TRANSACTION;
+    BEGIN TRY
+        -- Actualizar los datos del envío
+        UPDATE envios
+        SET cod_seguimiento = @cod_seguimiento,
+            id_estado = @id_estado
+        WHERE id_envio = @id_envio;
+
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH
+END;
+GO
+
+-- B. Consultar detalles de envíos completos
+CREATE PROCEDURE sp_ConsultarEnviosDetallados
+    @id_envio INT = NULL,
+    @id_estado INT = NULL,
+    @fecha_desde DATETIME = NULL,
+    @fecha_hasta DATETIME = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT 
+        e.id_envio,
+        e.cod_seguimiento,
+        e.costo,
+        e.fecha_creacion,
+        est.nombre AS estado_actual,
+        t.nombre AS transporte_nombre,
+        c.nombre AS cliente_nombre,
+        c.apellido AS cliente_apellido,
+        d.calle,
+        d.altura,
+        d.codigo_postal
+    FROM envios e
+    INNER JOIN estado est ON e.id_estado = est.id_estado
+    INNER JOIN transporte t ON e.id_transporte = t.id_transporte
+    INNER JOIN direccion d ON e.id_direccion = d.id_direccion
+    INNER JOIN cliente c ON d.id_cliente = c.id_cliente
+    WHERE 
+        (@id_envio IS NULL OR e.id_envio = @id_envio)
+        AND (@id_estado IS NULL OR e.id_estado = @id_estado)
+        AND (@fecha_desde IS NULL OR e.fecha_creacion >= @fecha_desde)
+        AND (@fecha_hasta IS NULL OR e.fecha_creacion <= @fecha_hasta)
+    ORDER BY e.fecha_creacion DESC;
+END;
+GO
+

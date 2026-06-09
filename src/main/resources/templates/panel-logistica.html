@@ -90,6 +90,24 @@
                 </form>
             </div>
 
+            <!-- Buscador por ID de Venta o Envío y Nombre de Cliente -->
+            <form th:action="@{/logistica}" method="get" style="margin-bottom: 20px; display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap;">
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label for="idBuscar" style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted);">
+                        <i class="fas fa-search"></i> Número de venta o envío
+                    </label>
+                    <input type="number" id="idBuscar" name="idBuscar" class="filter-input" placeholder="Ej: 1001" th:value="${filtroIdBuscar}" style="width: 180px; padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 0.9rem;">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label for="clienteBuscar" style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted);">
+                        <i class="fas fa-user"></i> Nombre de cliente
+                    </label>
+                    <input type="text" id="clienteBuscar" name="clienteBuscar" class="filter-input" placeholder="Ej: Gabriela" th:value="${filtroClienteBuscar}" style="width: 220px; padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 0.9rem;">
+                </div>
+                <button type="submit" class="btn-dark" style="padding: 8px 16px; font-size: 0.9rem; border-radius: 6px; cursor: pointer; height: 38px;"><i class="fas fa-search"></i> Buscar</button>
+                <a th:if="${filtroIdBuscar != null || (filtroClienteBuscar != null && !filtroClienteBuscar.isEmpty())}" th:href="@{/logistica}" class="btn-outline" style="text-decoration: none; padding: 8px 16px; font-size: 0.9rem; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; height: 38px; box-sizing: border-box;"><i class="fas fa-undo"></i> Limpiar</a>
+            </form>
+
         <table class="data-table">
             <thead>
                 <tr>
@@ -115,8 +133,12 @@
                     </td>
                 </tr>
                 <tr th:if="${#lists.isEmpty(enviosPendientes)}">
-                    <td colspan="5" style="text-align: center; padding: 20px; color: var(--text-muted);">
-                        No hay envíos pendientes actualmente.
+                    <td colspan="5" style="text-align: center; padding: 20px; color: var(--text-muted); font-weight: 500;">
+                        <span th:if="${filtroIdBuscar != null || (filtroClienteBuscar != null && !filtroClienteBuscar.isEmpty())}" 
+                              th:text="'Envío no encontrado: ' + (${filtroIdBuscar != null} ? ${filtroIdBuscar} : '') + (${filtroIdBuscar != null && filtroClienteBuscar != null && !filtroClienteBuscar.isEmpty()} ? ' / ' : '') + (${filtroClienteBuscar != null && !filtroClienteBuscar.isEmpty()} ? ${filtroClienteBuscar} : '')">
+                            Envío no encontrado
+                        </span>
+                        <span th:if="${filtroIdBuscar == null && (filtroClienteBuscar == null || filtroClienteBuscar.isEmpty())}">No hay envíos pendientes actualmente.</span>
                     </td>
                 </tr>
             </tbody>

@@ -43,7 +43,7 @@
         <!-- Panel de Búsqueda y Filtrado -->
         <form th:action="@{/envios}" method="get" class="filter-section">
             <div class="filter-group">
-                <label for="idVenta"><i class="fas fa-receipt"></i> ID Venta</label>
+                <label for="idVenta"><i class="fas fa-receipt"></i> ID Venta o Envío</label>
                 <input type="number" id="idVenta" name="idVenta" class="filter-input" placeholder="Ej: 5421" th:value="${filtroIdVenta}">
             </div>
             <div class="filter-group">
@@ -248,6 +248,16 @@
                 <button class="close-btn" onclick="cerrarModal('modalHistorial')">&times;</button>
             </div>
             <div class="modal-body">
+                <div id="historial-detalle-envio" style="display: none; background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; margin-bottom: 16px; font-size: 0.9rem; color: #374151; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);">
+                    <h4 style="margin-top: 0; margin-bottom: 8px; font-size: 0.95rem; border-bottom: 1px solid #e5e7eb; padding-bottom: 4px; color: #1f2937;"><i class="fas fa-info-circle" style="color: #f97316;"></i> Detalles Generales del Envío</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <div><strong>Cliente:</strong> <span id="det-cliente"></span></div>
+                        <div><strong>Costo:</strong> <span id="det-costo"></span></div>
+                        <div><strong>Transporte:</strong> <span id="det-transporte"></span></div>
+                        <div><strong>Seguimiento:</strong> <span id="det-seguimiento"></span></div>
+                        <div style="grid-column: span 2;"><strong>Dirección:</strong> <span id="det-direccion"></span></div>
+                    </div>
+                </div>
                 <div id="historial-loading" style="text-align: center; padding: 20px; color: var(--text-muted);">
                     <i class="fas fa-spinner fa-spin" style="font-size: 1.5rem; margin-bottom: 8px;"></i><br>
                     Cargando historial de movimientos...
@@ -294,6 +304,7 @@
             document.getElementById('historial-loading').style.display = 'block';
             document.getElementById('historial-timeline').style.display = 'none';
             document.getElementById('historial-empty').style.display = 'none';
+            document.getElementById('historial-detalle-envio').style.display = 'none';
             document.getElementById('modalHistorial').style.display = 'flex';
 
             fetch('/envios/historial/' + idEnvio)
@@ -305,15 +316,27 @@
                 })
                 .then(data => {
                     document.getElementById('historial-loading').style.display = 'none';
+
+                    // Renderizar detalle si existe
+                    if (data.detalle) {
+                        document.getElementById('det-cliente').textContent = data.detalle.clienteNombre + ' ' + data.detalle.clienteApellido;
+                        document.getElementById('det-costo').textContent = '$' + data.detalle.costo;
+                        document.getElementById('det-transporte').textContent = data.detalle.transporteNombre;
+                        document.getElementById('det-seguimiento').textContent = data.detalle.codSeguimiento;
+                        document.getElementById('det-direccion').textContent = data.detalle.calle + ' ' + data.detalle.altura + ', CP ' + data.detalle.codigoPostal;
+                        document.getElementById('historial-detalle-envio').style.display = 'block';
+                    }
+
                     const timeline = document.getElementById('historial-timeline');
                     timeline.innerHTML = '';
 
-                    if (!data || data.length === 0) {
+                    const listaHistorial = data.historial;
+                    if (!listaHistorial || listaHistorial.length === 0) {
                         document.getElementById('historial-empty').style.display = 'block';
                         return;
                     }
 
-                    data.forEach(item => {
+                    listaHistorial.forEach(item => {
                         const itemDiv = document.createElement('div');
                         itemDiv.className = 'timeline-item';
 

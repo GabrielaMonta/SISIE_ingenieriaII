@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import sisie.capaDeLogica.EnvioService;
 import sisie.capaDeLogica.VentaService;
+import sisie.capaDeLogica.HistorialEnvioService;
 import sisie.capaDeDatos.UsuarioRepository;
 
 @Controller
@@ -24,6 +25,9 @@ public class ControladorPrincipal {
 
     @Autowired
     private EnvioService envioService;
+
+    @Autowired
+    private HistorialEnvioService historialEnvioService;
 
     @Autowired
     private VentaService ventaService;
@@ -37,7 +41,11 @@ public class ControladorPrincipal {
     }
 
     @GetMapping("/logistica")
-    public String showLogisticaPanel(Model model, Principal principal) {
+    public String showLogisticaPanel(
+            @RequestParam(value = "idBuscar", required = false) Integer idBuscar,
+            @RequestParam(value = "clienteBuscar", required = false) String clienteBuscar,
+            Model model, 
+            Principal principal) {
         if (principal != null) {
             //Obtiene usuario logeado
             String email = principal.getName();
@@ -53,8 +61,23 @@ public class ControladorPrincipal {
         model.addAttribute("enProceso", envioService.contarEnviosPorEstado("En proceso"));
         model.addAttribute("entregados", envioService.contarEnviosPorEstado("Entregado"));
         
-        // Llamado a la función especificada por el usuario
-        model.addAttribute("enviosPendientes", envioService.obtenerEnviosPorEstado("Pendiente"));
+        List<sisie.capaDeDominio.Envio> pendientes = envioService.obtenerEnviosPorEstado("Pendiente");
+        if (idBuscar != null) {
+            pendientes = pendientes.stream()
+                .filter(e -> e.getIdEnvio().equals(idBuscar) || e.getVenta().getIdVenta().equals(idBuscar))
+                .collect(java.util.stream.Collectors.toList());
+        }
+        if (clienteBuscar != null && !clienteBuscar.trim().isEmpty()) {
+            String q = clienteBuscar.trim().toLowerCase();
+            pendientes = pendientes.stream()
+                .filter(e -> e.getVenta() != null && e.getVenta().getCliente() != null &&
+                        ((e.getVenta().getCliente().getNombre() + " " + e.getVenta().getCliente().getApellido()).toLowerCase().contains(q)))
+                .collect(java.util.stream.Collectors.toList());
+        }
+        
+        model.addAttribute("enviosPendientes", pendientes);
+        model.addAttribute("filtroIdBuscar", idBuscar);
+        model.addAttribute("filtroClienteBuscar", clienteBuscar);
 
         return "panel-logistica";
     }
@@ -154,9 +177,9 @@ public class ControladorPrincipal {
 
     @GetMapping("/envios/historial/{id}")
     @ResponseBody
-    public List<Map<String, Object>> verHistorial(@PathVariable("id") Integer idEnvio) {
-        List<sisie.capaDeDominio.HistorialEnvio> historial = envioService.obtenerHistorial(idEnvio);
-        List<Map<String, Object>> response = new ArrayList<>();
+    public Map<String, Object> verHistorial(@PathVariable("id") Integer idEnvio) {
+        List<sisie.capaDeDominio.HistorialEnvio> historial = historialEnvioService.obtenerHistorial(idEnvio);
+        List<Map<String, Object>> historialList = new ArrayList<>();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
         for (sisie.capaDeDominio.HistorialEnvio h : historial) {
             Map<String, Object> map = new HashMap<>();
@@ -164,8 +187,12 @@ public class ControladorPrincipal {
             map.put("estado", h.getEstado().getNombre());
             map.put("motivo", h.getMotivo());
             map.put("usuario", h.getUsuario() != null ? (h.getUsuario().getNombre() + " " + h.getUsuario().getApellido()) : "Sistema");
-            response.add(map);
+            historialList.add(map);
         }
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("detalle", envioService.obtenerDetalleEnvioPorSP(idEnvio));
+        response.put("historial", historialList);
         return response;
     }
 }

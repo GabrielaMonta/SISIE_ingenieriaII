@@ -4,7 +4,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import sisie.capaDeDatos.EnvioRepository;
-import sisie.capaDeDatos.HistorialEnvioRepository;
 import sisie.capaDeDominio.*;
 import java.math.BigDecimal;
 import java.util.List;
@@ -14,9 +13,6 @@ public class EnvioService {
 
     @Autowired
     private EnvioRepository envioRepository;
-
-    @Autowired
-    private HistorialEnvioRepository historialRepository;
 
     @Autowired
     private List<ObservadorEnvio> observadores;
@@ -122,7 +118,8 @@ public class EnvioService {
         envio.cambiarEstado();
         envio.setMotivoTransicion(null);
 
-        envioRepository.save(envio);
+        // Llamamos al procedimiento almacenado para actualizar en la base de datos
+        envioRepository.actualizarSeguimientoYEstado(envio.getIdEnvio(), envio.getCodSeguimiento(), envio.getEstadoActual().getIdEstado());
     }
 
     // Edita un código de seguimiento existente manteniendo el estado En Tránsito
@@ -140,7 +137,8 @@ public class EnvioService {
         envio.notificarObservadores();
         envio.setMotivoTransicion(null);
 
-        envioRepository.save(envio);
+        // Llamamos al procedimiento almacenado para actualizar en la base de datos
+        envioRepository.actualizarSeguimientoYEstado(envio.getIdEnvio(), envio.getCodSeguimiento(), envio.getEstadoActual().getIdEstado());
     }
 
     private void validarCodigoSeguimiento(String codSeguimiento, Integer idEnvio) {
@@ -197,9 +195,11 @@ public class EnvioService {
         java.time.LocalDate fechaHasta = (fechaHastaStr != null && !fechaHastaStr.trim().isEmpty()) ? java.time.LocalDate.parse(fechaHastaStr) : null;
 
         List<Envio> filtrados = todos.stream().filter(e -> {
-            // 1. ID Venta
+            // 1. ID Venta o ID Envio
             if (idVenta != null) {
-                if (e.getVenta() == null || !e.getVenta().getIdVenta().equals(idVenta)) {
+                boolean matchesVenta = e.getVenta() != null && e.getVenta().getIdVenta().equals(idVenta);
+                boolean matchesEnvio = e.getIdEnvio() != null && e.getIdEnvio().equals(idVenta);
+                if (!matchesVenta && !matchesEnvio) {
                     return false;
                 }
             }
@@ -238,8 +238,27 @@ public class EnvioService {
         return registrarObservadores(filtrados);
     }
 
-    // Obtiene el historial de envios ordenado por fecha
-    public List<HistorialEnvio> obtenerHistorial(Integer idEnvio) {
-        return historialRepository.findByEnvioIdEnvioOrderByFechaMovimientoAsc(idEnvio);
+
+
+    // Obtiene el detalle completo del envío usando el procedimiento almacenado
+    public java.util.Map<String, Object> obtenerDetalleEnvioPorSP(Integer idEnvio) {
+        List<Object[]> resultados = envioRepository.consultarEnvioDetallado(idEnvio);
+        if (resultados != null && !resultados.isEmpty()) {
+            Object[] fila = resultados.get(0);
+            java.util.Map<String, Object> det = new java.util.HashMap<>();
+            det.put("idEnvio", fila[0]);
+            det.put("codSeguimiento", fila[1] != null ? fila[1].toString() : "Sin asignar");
+            det.put("costo", fila[2]);
+            det.put("fechaCreacion", fila[3] != null ? fila[3].toString() : "");
+            det.put("estadoActual", fila[4]);
+            det.put("transporteNombre", fila[5]);
+            det.put("clienteNombre", fila[6]);
+            det.put("clienteApellido", fila[7]);
+            det.put("calle", fila[8]);
+            det.put("altura", fila[9]);
+            det.put("codigoPostal", fila[10]);
+            return det;
+        }
+        return null;
     }
 }

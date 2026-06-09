@@ -2,6 +2,7 @@ package sisie.capaDeLogica;
 import sisie.capaDeDominio.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import sisie.capaDeDatos.HistorialEnvioRepository;
@@ -22,5 +23,9 @@ public class HistorialEnvioService {
         h.setMotivo("Inicio de gestión"); // Se asigna motivo, ya que es nullable = false en la BD
 
         historialRepository.save(h);
+    }
+
+    public List<HistorialEnvio> obtenerHistorial(Integer idEnvio) {
+        return historialRepository.findByEnvioIdEnvioOrderByFechaMovimientoAsc(idEnvio);
     }
 }
