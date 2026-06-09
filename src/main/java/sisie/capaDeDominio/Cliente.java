@@ -23,5 +23,5 @@ public class Cliente {
     private String apellido;
 
     @Column(name = "email", length = 50)
-    private String email = "gabimonta@hotmail.com.ar";
+    private String email = "ivbianca25@gmail.com";
 }
