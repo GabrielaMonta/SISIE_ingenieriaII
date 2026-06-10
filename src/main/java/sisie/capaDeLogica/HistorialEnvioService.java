@@ -12,16 +12,13 @@ public class HistorialEnvioService {
     
     @Autowired private HistorialEnvioRepository historialRepository;
 
-    public void registrarCambioEstado(Envio envio, EstadoEnvio estado, Usuario usuario){
-
-        
+    public void registrarCambioEstado(Envio envio, String motivo, Usuario usuario) {
         HistorialEnvio h = new HistorialEnvio();
         h.setEnvio(envio);
-        h.setEstado(estado);
+        h.setEstado(envio.getEstadoActual());
         h.setFechaMovimiento(LocalDateTime.now());
+        h.setMotivo(motivo);
         h.setUsuario(usuario);
-        h.setMotivo("Inicio de gestión"); // Se asigna motivo, ya que es nullable = false en la BD
-
         historialRepository.save(h);
     }
 

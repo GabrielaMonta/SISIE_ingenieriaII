@@ -4,17 +4,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
-import sisie.capaDeDatos.HistorialEnvioRepository;
 import sisie.capaDeDatos.UsuarioRepository;
 import sisie.capaDeDominio.*;
-
-import java.time.LocalDateTime;
 
 @Component
 public class RegistradorHistorial implements ObservadorEnvio {
 
     @Autowired
-    private HistorialEnvioRepository historialRepository;
+    private HistorialEnvioService historialEnvioService;
 
     @Autowired
     private UsuarioRepository usuarioRepository;
@@ -25,11 +22,6 @@ public class RegistradorHistorial implements ObservadorEnvio {
     }
 
     private void registrarCambioEstado(Envio envio) {
-        HistorialEnvio h = new HistorialEnvio();
-        h.setEnvio(envio);
-        h.setEstado(envio.getEstadoActual());
-        h.setFechaMovimiento(LocalDateTime.now());
-
         // Determinar el motivo según el estado actual o el motivo personalizado
         String motivo = envio.getMotivoTransicion();
         if (motivo == null || motivo.trim().isEmpty()) {
@@ -47,7 +39,6 @@ public class RegistradorHistorial implements ObservadorEnvio {
                 motivo = "Envío no entregado";
             }
         }
-        h.setMotivo(motivo);
 
         // Obtener usuario autenticado en Spring Security
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -61,7 +52,7 @@ public class RegistradorHistorial implements ObservadorEnvio {
             usuario = usuarioRepository.findAll().stream().findFirst().orElse(null);
         }
 
-        h.setUsuario(usuario);
-        historialRepository.save(h);
+        // Delegar la persistencia al servicio de historial
+        historialEnvioService.registrarCambioEstado(envio, motivo, usuario);
     }
 }
